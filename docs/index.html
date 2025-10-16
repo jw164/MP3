@@ -1,240 +1,363 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MP3 Task Manager</title>
-  <meta name="description" content="GitHub Pages frontend for MP3 REST API (users/tasks) with optional local demo mode." />
-  <style>
-    :root {
-      --primary:#2563eb; --primary-2:#1d4ed8; --bg:#f8fafc; --card:#fff;
-      --text:#0f172a; --muted:#6b7280; --border:#e5e7eb; --green:#10b981; --red:#ef4444; --yellow:#f59e0b;
-    }
-    *{box-sizing:border-box} body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
-    .container{max-width:960px;margin:40px auto;padding:0 16px} header{text-align:center;margin-bottom:16px}
-    h1{margin:0 0 6px;color:var(--primary)}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    input[type="url"],input[type="text"]{flex:1 1 260px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;outline:none}
-    button{padding:10px 14px;border:none;border-radius:10px;background:var(--primary);color:#fff;cursor:pointer}
-    button:hover{background:var(--primary-2)} button.ghost{background:#eef2ff;color:var(--primary-2)}
-    .muted{color:var(--muted)} .status{display:flex;align-items:center;gap:8px}
-    .dot{width:10px;height:10px;border-radius:999px;background:#cbd5e1;display:inline-block}
-    .ok{background:var(--green)!important} .bad{background:var(--red)!important} .warn{background:var(--yellow)!important}
-    .spinner{width:14px;height:14px;border-radius:999px;border:2px solid #cbd5e1;border-top-color:var(--primary);animation:spin 1s linear infinite;display:inline-block}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    ul{list-style:none;margin:14px 0 0;padding:0}
-    li.task{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;border-bottom:1px solid var(--border);padding:10px 6px}
-    li.task:last-child{border-bottom:0} .empty{text-align:center;color:var(--muted);padding:16px}
-    .kpi{display:inline-flex;gap:6px;align-items:center;background:#eff6ff;border:1px solid #dbeafe;border-radius:999px;padding:3px 10px;color:#1e40af;font-size:12px}
-    footer{text-align:center;margin:22px 0 8px;color:var(--muted);font-size:13px}
-    .msg{margin-top:10px;padding:10px;border-radius:10px;border:1px solid var(--border)}
-    .msg.err{background:#fef2f2;border-color:#fecaca;color:#991b1b}
-    .msg.ok{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
-    .tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:12px;gap:6px}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MP3 – Users & Tasks API Client</title>
+<style>
+  :root{--bg:#0b1020;--card:#111730;--muted:#9aa4bf;--text:#e8ecf6;--primary:#4f8bff;--ok:#22c55e;--bad:#ef4444;--border:#1c2442}
+  *{box-sizing:border-box} body{margin:0;background:linear-gradient(160deg,#0b1020 0%,#0e1530 100%);color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+  .wrap{max-width:1100px;margin:36px auto;padding:0 16px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+  h1{margin:0 0 6px;font-size:28px}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input,textarea,select,button{border-radius:10px;border:1px solid var(--border);background:#0f1733;color:var(--text);padding:10px 12px}
+  input,textarea,select{flex:1}
+  textarea{min-height:90px;font-family:ui-monospace,Consolas,Monaco,monospace}
+  button{background:var(--primary);border:none;cursor:pointer} button.ghost{background:#122046} button.warn{background:#ffae1f;color:#130a00}
+  .l{display:grid;grid-template-columns:1.2fr 0.8fr;gap:12px}
+  .tabs{display:flex;gap:6px;margin:10px 0}
+  .tab{padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:#0e1631;color:var(--muted);cursor:pointer}
+  .tab.active{background:var(--primary);color:#fff;border-color:transparent}
+  .kpi{display:inline-flex;gap:8px;align-items:center;background:#0d1a39;border:1px solid var(--border);border-radius:999px;padding:6px 12px;margin-left:8px}
+  .dot{width:10px;height:10px;border-radius:999px;background:#54608a;display:inline-block}
+  .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.warn{background:#f59e0b}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+  table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  th,td{border-bottom:1px solid var(--border);padding:10px 12px;vertical-align:top}
+  th{background:#0c132b;text-align:left;color:#b7c3e0}
+  .code{font-family:ui-monospace,Consolas,monospace;background:#0b1228;border:1px solid var(--border);padding:10px;border-radius:10px;white-space:pre-wrap;word-break:break-word}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:#0b1a39;border:1px solid var(--border);border-radius:999px;padding:4px 10px;color:#b7c3e0}
+  .btns{display:flex;gap:6px;flex-wrap:wrap}
+  .msg{margin-top:8px;padding:10px;border-radius:10px;border:1px solid var(--border)}
+  .ok{color:#16a34a} .err{color:#ef4444}
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>MP3 Task Manager</h1>
-      <p class="muted">Pages frontend → uses your Codespaces API (port 3000 set to <b>Public</b>). If no API is set, it falls back to <b>Demo Mode</b> (localStorage).</p>
-    </header>
-
-    <!-- Backend config -->
-    <section class="card" aria-label="Backend configuration">
-      <div class="row">
-        <input id="api" type="url" placeholder="Paste Codespaces public URL, e.g. https://3000-xxxx.github.dev" />
-        <button id="save">Save URL</button>
-        <button id="copy" class="ghost" title="Copy URL">Copy</button>
-        <button id="ping" class="ghost" title="Check backend reachability">Ping</button>
-      </div>
-      <div class="row" style="margin-top:8px;align-items:center;gap:12px">
-        <span class="status">
-          <span id="dot" class="dot" aria-hidden="true"></span>
-          <span id="stat" class="muted">Idle</span>
-        </span>
-        <span id="modeTag" class="tag"><b>Mode:</b> <span id="modeLabel">Demo</span></span>
-        <span class="kpi" title="Total tasks"><span>Tasks:</span><b id="count">0</b></span>
-      </div>
-      <div id="notice" class="muted" style="margin-top:6px;font-size:13px">
-        URL is saved in <code>localStorage</code>. You can also pass <code>?api=...</code> in the query string.
-      </div>
-      <div id="help" class="msg" style="display:none"></div>
-    </section>
-
-    <!-- Tasks -->
-    <section class="card" style="margin-top:14px" aria-label="Tasks">
-      <div class="row">
-        <input id="newTask" type="text" placeholder="New task name…" />
-        <button id="add">Add Task</button>
-        <button id="reload" class="ghost">Reload</button>
-        <button id="clearDemo" class="ghost" title="Clear local demo data" style="display:none">Clear Demo Data</button>
-      </div>
-      <ul id="list"><li class="empty">No tasks yet. Click “Reload”.</li></ul>
-      <div id="msg" style="display:none"></div>
-    </section>
-
-    <footer>
-      <div>Frontend: <a href="https://jw164.github.io/MP3/">jw164.github.io/MP3</a></div>
-      <div>Make sure your backend is running (<b>npm start</b>) and port 3000 is <b>Public</b>.</div>
-    </footer>
+<div class="wrap">
+  <div class="card">
+    <h1>MP3 API Client</h1>
+    <div class="row">
+      <input id="apiBase" type="url" placeholder="API base, e.g. https://your-service.onrender.com"/>
+      <button id="save">Save URL</button>
+      <button id="ping" class="ghost">Ping</button>
+      <span class="kpi"><span class="dot" id="dot"></span><span id="state">Idle</span></span>
+      <span class="kpi">Mode: <b id="mode">Demo</b></span>
+      <span class="kpi">Tasks: <b id="count">0</b></span>
+    </div>
+    <div class="muted" style="margin-top:6px">
+      URL persists in <code>localStorage</code>. You can also open with <code>?api=...</code>. This UI supports all required query params: <code>where/sort/select/skip/limit/count</code>.
+    </div>
   </div>
 
-  <script>
-    // ---------- helpers ----------
-    const $ = (id) => document.getElementById(id);
-    const apiInput = $("api"), dot = $("dot"), stat = $("stat"), list = $("list"),
-          msg = $("msg"), count = $("count"), help = $("help"),
-          modeTag = $("modeTag"), modeLabel = $("modeLabel"), clearDemoBtn = $("clearDemo");
+  <div class="tabs">
+    <button class="tab active" data-tab="tasks">Tasks</button>
+    <button class="tab" data-tab="users">Users</button>
+  </div>
 
-    const qs = new URLSearchParams(location.search);
-    const saved = localStorage.getItem("mp3_api_base");
-    apiInput.value = qs.get("api") || saved || "";
+  <!-- main layout -->
+  <div class="l">
+    <!-- left: query + results -->
+    <div class="card">
+      <h3 style="margin-top:0">Query Builder</h3>
+      <div class="grid">
+        <textarea id="where" placeholder='where (JSON), e.g. {"completed": true}'></textarea>
+        <textarea id="sort" placeholder='sort (JSON), e.g. {"name": 1}'></textarea>
+        <textarea id="select" placeholder='select (JSON), e.g. {"_id": 0, "name": 1}'></textarea>
+        <input id="skip" type="number" placeholder="skip (number)"/>
+        <input id="limit" type="number" placeholder="limit (number)"/>
+        <select id="count">
+          <option value="">count = false</option>
+          <option value="true">count = true</option>
+        </select>
+      </div>
+      <div class="btns" style="margin-top:10px">
+        <button id="run">Run</button>
+        <button id="examples" class="ghost">Example Queries</button>
+        <button id="clear" class="ghost">Clear Params</button>
+      </div>
+      <div id="endpoint" class="code" style="margin-top:10px"></div>
+      <div id="result" class="code" style="margin-top:10px;min-height:160px">Result will appear here…</div>
+    </div>
 
-    function apiBase() {
-      const v = apiInput.value.trim().replace(/\/$/, "");
-      return v || null;
-    }
-    function showMsg(el, text, type) {
-      el.style.display = "block"; el.className = "msg " + (type || "");
-      el.textContent = text; setTimeout(() => (el.style.display = "none"), 3500);
-    }
-    function setState(text, cls) { stat.textContent = text; dot.className = "dot " + (cls || ""); }
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    <!-- right: CRUD -->
+    <div class="card">
+      <h3 style="margin-top:0"><span id="crudTitle">Create Task</span></h3>
 
-    // ---------- data backends ----------
-    const DemoStore = {
-      key: "mp3_demo_tasks",
-      read() { return JSON.parse(localStorage.getItem(this.key) || "[]"); },
-      write(arr) { localStorage.setItem(this.key, JSON.stringify(arr)); },
-      async list(){ return this.read(); },
-      async add(task){ const a=this.read(); a.unshift(task); this.write(a); },
-      async del(id){ this.write(this.read().filter(t=>t._id!==id)); },
-      async toggle(id, completed){ const a=this.read(); const t=a.find(x=>x._id===id); if(t){t.completed=completed; this.write(a);} },
-      async clear(){ localStorage.removeItem(this.key); }
-    };
+      <!-- TASKS FORM -->
+      <div id="formTasks">
+        <div class="grid">
+          <input id="t_id" placeholder="id (for GET/PUT/DELETE)"/>
+          <input id="t_name" placeholder="name *"/>
+          <input id="t_deadline" type="datetime-local" placeholder="deadline *"/>
+          <input id="t_completed" placeholder="completed (true/false)"/>
+          <input id="t_assignedUser" placeholder='assignedUser (user _id or "")'/>
+          <input id="t_assignedUserName" placeholder='assignedUserName (or "unassigned")'/>
+          <textarea id="t_description" placeholder="description"></textarea>
+        </div>
+        <div class="btns" style="margin-top:10px">
+          <button id="t_create">POST /tasks</button>
+          <button id="t_get" class="ghost">GET /tasks/:id</button>
+          <button id="t_put" class="ghost">PUT /tasks/:id</button>
+          <button id="t_del" class="warn">DELETE /tasks/:id</button>
+          <button id="t_reload" class="ghost">Reload list (GET /tasks)</button>
+        </div>
+        <div id="t_msg" class="msg muted"></div>
+        <div style="margin-top:10px">
+          <table id="t_table">
+            <thead><tr><th>_id</th><th>name</th><th>completed</th><th>deadline</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
 
-    async function fetchJSON(url, opts = {}, timeout = 15000) {
-      const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), timeout);
-      try {
-        const res = await fetch(url, { ...opts, signal: ctrl.signal });
-        if (!res.ok) throw new Error(res.status + " " + res.statusText);
-        return await res.json();
-      } finally { clearTimeout(t); }
-    }
+      <!-- USERS FORM -->
+      <div id="formUsers" style="display:none">
+        <div class="grid">
+          <input id="u_id" placeholder="id (for GET/PUT/DELETE)"/>
+          <input id="u_name" placeholder="name *"/>
+          <input id="u_email" placeholder="email *"/>
+          <textarea id="u_pending" placeholder='pendingTasks (JSON array of task _id strings)'></textarea>
+        </div>
+        <div class="btns" style="margin-top:10px">
+          <button id="u_create">POST /users</button>
+          <button id="u_get" class="ghost">GET /users/:id</button>
+          <button id="u_put" class="ghost">PUT /users/:id</button>
+          <button id="u_del" class="warn">DELETE /users/:id</button>
+          <button id="u_reload" class="ghost">Reload list (GET /users)</button>
+        </div>
+        <div id="u_msg" class="msg muted"></div>
+        <div style="margin-top:10px">
+          <table id="u_table">
+            <thead><tr><th>_id</th><th>name</th><th>email</th><th>pendingTasks (len)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    function inApiMode() { return !!apiBase(); }
+  <div class="muted" style="margin-top:10px">Tip: if no API is reachable, the UI falls back to a demo store (localStorage) so you can still present the flows.</div>
+</div>
 
-    // ---------- UI render ----------
-    async function loadTasks() {
-      list.innerHTML = '<li class="empty"><span class="spinner"></span> Loading…</li>';
-      try {
-        let tasks;
-        if (inApiMode()) {
-          const data = await fetchJSON(apiBase() + '/api/tasks?sort={"dateCreated":-1}');
-          tasks = data.data || [];
-        } else {
-          tasks = await DemoStore.list();
-        }
-        count.textContent = tasks.length;
-        if (!tasks.length) { list.innerHTML = '<li class="empty">No tasks found.</li>'; return; }
-        list.innerHTML = tasks.map(t => `
-          <li class="task">
-            <input type="checkbox" ${t.completed ? "checked" : ""} onchange="toggleTask('${t._id}', this.checked)" />
-            <div>
-              <div>${t.name}</div>
-              <div class="muted" style="font-size:12px">id: ${t._id}</div>
-            </div>
-            <button onclick="removeTask('${t._id}')">Delete</button>
-          </li>
-        `).join("");
-      } catch (e) {
-        list.innerHTML = '<li class="empty">Failed to load tasks.</li>';
-        count.textContent = "0";
-        showMsg(msg, "Cannot reach backend. Is port 3000 Public? Is the server running?", "err");
-        console.error(e);
+<script>
+// ---------- helpers ----------
+const $ = (sel)=>document.querySelector(sel);
+const $$=(sel)=>document.querySelectorAll(sel);
+const apiInput = $('#apiBase'), dot = $('#dot'), state=$('#state'), mode = $('#mode');
+const endpointEl = $('#endpoint'), resultEl = $('#result'), countEl = $('#count');
+
+const qs = new URLSearchParams(location.search);
+const saved = localStorage.getItem('mp3_api_base');
+apiInput.value = qs.get('api') || saved || '';
+
+// tabs
+for(const b of $$('.tab')){
+  b.onclick=()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+    const t=b.dataset.tab; $('#formTasks').style.display=t==='tasks'?'block':'none';
+    $('#formUsers').style.display=t==='users'?'block':'none';
+    $('#crudTitle').textContent = t==='tasks'?'Create Task':'Create User';
+  };
+}
+
+// fetch JSON with timeout
+async function jsonFetch(url, opts={}, t=15000){
+  const ctl=new AbortController(); const id=setTimeout(()=>ctl.abort(),t);
+  try{ const r=await fetch(url,{...opts,signal:ctl.signal});
+       if(!r.ok) throw new Error(r.status+' '+r.statusText);
+       return await r.json();
+  }finally{ clearTimeout(id); }
+}
+
+// demo store (for no-backend mode)
+const Store = {
+  kTask:'mp3_demo_tasks', kUser:'mp3_demo_users',
+  _r(k){return JSON.parse(localStorage.getItem(k)||'[]')},
+  _w(k,v){localStorage.setItem(k,JSON.stringify(v))},
+
+  async listTasks(){return this._r(this.kTask)},
+  async createTask(p){const a=this._r(this.kTask); p._id=String(Date.now()); a.unshift(p); this._w(this.kTask,a); return p;},
+  async getTask(id){return this._r(this.kTask).find(x=>x._id===id)||null},
+  async putTask(id,p){const a=this._r(this.kTask); const i=a.findIndex(x=>x._id===id); if(i<0)return null; a[i]={...a[i],...p}; this._w(this.kTask,a); return a[i]},
+  async delTask(id){this._w(this.kTask,this._r(this.kTask).filter(x=>x._id!==id))},
+
+  async listUsers(){return this._r(this.kUser)},
+  async createUser(p){const a=this._r(this.kUser); p._id=String(Date.now()); p.pendingTasks=p.pendingTasks||[]; a.unshift(p); this._w(this.kUser,a); return p;},
+  async getUser(id){return this._r(this.kUser).find(x=>x._id===id)||null},
+  async putUser(id,p){const a=this._r(this.kUser); const i=a.findIndex(x=>x._id===id); if(i<0)return null; a[i]={...a[i],...p}; this._w(this.kUser,a); return a[i]},
+  async delUser(id){this._w(this.kUser,this._r(this.kUser).filter(x=>x._id!==id))}
+};
+
+function base(){ const v=apiInput.value.trim().replace(/\/$/,''); return v||null; }
+function apiMode(){ return !!base(); }
+function setState(s,cls){ state.textContent=s; dot.className='dot '+(cls||''); mode.textContent=apiMode()?'API':'Demo'; }
+function setEndpoint(url){ endpointEl.textContent = url||''; }
+function setResult(obj){ resultEl.textContent = (typeof obj==='string')?obj:JSON.stringify(obj,null,2); }
+
+// ---------- Query Builder ----------
+function activeResource(){ return $('.tab.active').dataset.tab; } // 'tasks' | 'users'
+function buildQuery(){
+  const q = {};
+  const w=$('#where').value.trim(); if(w) q.where=w;
+  const s=$('#sort').value.trim();  if(s) q.sort=s;
+  const sel=$('#select').value.trim(); if(sel) q.select=sel;
+  const sk=$('#skip').value.trim(); if(sk) q.skip=sk;
+  const lim=$('#limit').value.trim(); if(lim) q.limit=lim;
+  const c=$('#count').value; if(c) q.count='true';
+  const qs = new URLSearchParams(q).toString();
+  const res = activeResource()==='tasks'?'tasks':'users';
+  const url = (base()||'') + `/api/${res}` + (qs?`?${qs}`:'');
+  return url;
+}
+
+async function runQuery(){
+  const url = buildQuery();
+  setEndpoint(url||'(demo)');
+  try{
+    let data;
+    if(apiMode()){ data = await jsonFetch(url); }
+    else{
+      // emulate count
+      if(activeResource()==='tasks'){
+        let arr=await Store.listTasks();
+        data = $('#count').value ? { message:'OK', data:arr.length } : { message:'OK', data:arr };
+      }else{
+        let arr=await Store.listUsers();
+        data = $('#count').value ? { message:'OK', data:arr.length } : { message:'OK', data:arr };
       }
     }
+    setResult(data);
+    if(activeResource()==='tasks') renderTasks(Array.isArray(data.data)?data.data:[]);
+    else renderUsers(Array.isArray(data.data)?data.data:[]);
+  }catch(e){ setResult(String(e)); }
+}
 
-    async function addTask() {
-      const name = $("newTask").value.trim();
-      if (!name) return showMsg(msg, "Please enter a task name.");
-      try {
-        if (inApiMode()) {
-          await fetch(apiBase() + "/api/tasks", {
-            method: "POST",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({ name, deadline: new Date().toISOString() })
-          });
-        } else {
-          await DemoStore.add({ _id: String(Date.now()), name, deadline: new Date().toISOString(), completed:false });
-        }
-        $("newTask").value = ""; showMsg(msg, "Task created.", "ok"); loadTasks();
-      } catch (e) { showMsg(msg, "Failed to create task.", "err"); }
-    }
+// examples
+$('#examples').onclick=()=>{
+  const res=activeResource();
+  if(res==='tasks'){
+    $('#where').value='{"completed": true}';
+    $('#sort').value=''; $('#select').value=''; $('#skip').value=''; $('#limit').value=''; $('#count').value='';
+  }else{
+    $('#where').value=''; $('#sort').value='{"name": 1}'; $('#select').value='{"_id":0}'; $('#skip').value='60'; $('#limit').value='20'; $('#count').value='';
+  }
+};
+$('#clear').onclick=()=>[$('#where'),$('#sort'),$('#select'),$('#skip'),$('#limit')].forEach(x=>x.value=''),$('#count').value='';
 
-    async function removeTask(id) {
-      if (!confirm("Delete this task?")) return;
-      try {
-        if (inApiMode()) {
-          await fetch(apiBase() + "/api/tasks/" + encodeURIComponent(id), { method:"DELETE" });
-        } else { await DemoStore.del(id); }
-        showMsg(msg, "Task deleted.", "ok"); loadTasks();
-      } catch (e) { showMsg(msg, "Failed to delete task.", "err"); }
-    }
+// ---------- Ping / Save ----------
+$('#save').onclick=()=>{ const v=base(); if(!v){alert('Please input API base URL'); return;} localStorage.setItem('mp3_api_base',v); setState('Saved','warn'); };
+$('#ping').onclick=async()=>{
+  if(!apiMode()){ setState('Demo mode','warn'); return; }
+  try{ await fetch(base()+'/api/tasks?limit=1'); setState('Reachable','ok'); }
+  catch{ setState('Unreachable','bad'); }
+};
 
-    async function toggleTask(id, completed) {
-      try {
-        if (inApiMode()) {
-          await fetch(apiBase() + "/api/tasks/" + encodeURIComponent(id), {
-            method:"PUT",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({ completed })
-          });
-        } else { await DemoStore.toggle(id, completed); }
-      } catch (e) { showMsg(msg, "Failed to update task.", "err"); }
-    }
-    window.removeTask = removeTask;
-    window.toggleTask = toggleTask;
+// ---------- Tasks CRUD ----------
+function readTaskBody(){
+  const name=$('#t_name').value.trim();
+  const ddl=$('#t_deadline').value?new Date($('#t_deadline').value).toISOString():null;
+  const completed=$('#t_completed').value.trim();
+  const assignedUser=$('#t_assignedUser').value.trim();
+  const assignedUserName=$('#t_assignedUserName').value.trim();
+  const description=$('#t_description').value.trim();
+  const body={};
+  if(name) body.name=name; if(ddl) body.deadline=ddl;
+  if(completed) body.completed = completed==='true' || completed===true;
+  if(assignedUser!=='') body.assignedUser=assignedUser;
+  if(assignedUserName) body.assignedUserName=assignedUserName;
+  if(description) body.description=description;
+  return body;
+}
+function renderTasks(arr){
+  const tb=$('#t_table tbody'); tb.innerHTML='';
+  arr.forEach(t=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${t._id||''}</td><td>${t.name||''}</td><td>${t.completed?'true':'false'}</td><td>${t.deadline||''}</td>`;
+    tb.appendChild(tr);
+  });
+  countEl.textContent=arr.length||0;
+}
+async function t_reload(){ if(apiMode()){ const r=await jsonFetch(base()+'/api/tasks'); renderTasks(r.data||[]); setResult(r); setEndpoint(base()+'/api/tasks'); } else { const a=await Store.listTasks(); renderTasks(a); setResult({message:'OK',data:a}); setEndpoint('(demo)'); } }
+$('#t_reload').onclick=t_reload;
 
-    // ---------- actions ----------
-    $("save").onclick = () => {
-      const v = apiBase(); if (!v) { showMsg(help, "Please paste your Codespaces public URL.", "err"); return; }
-      localStorage.setItem("mp3_api_base", v); showMsg(help, "URL saved.", "ok"); setMode();
-    };
-    $("copy").onclick = async () => {
-      try { await navigator.clipboard.writeText(apiInput.value.trim()); showMsg(help, "URL copied.", "ok"); }
-      catch { showMsg(help, "Copy failed.", "err"); }
-    };
-    $("ping").onclick = ping;
-    $("add").onclick = addTask;
-    $("reload").onclick = loadTasks;
-    clearDemoBtn.onclick = async () => { await DemoStore.clear(); loadTasks(); showMsg(msg, "Demo data cleared.", "ok"); };
+$('#t_create').onclick=async()=>{
+  const b=readTaskBody(); if(!b.name||!b.deadline){$('#t_msg').textContent='name & deadline required'; return;}
+  try{
+    let r;
+    if(apiMode()){ r=await jsonFetch(base()+'/api/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); }
+    else{ r={message:'Created',data:await Store.createTask(b)}; }
+    setResult(r); t_reload();
+    $('#t_msg').textContent='Created'; $('#t_msg').className='msg ok';
+  }catch(e){ $('#t_msg').textContent=String(e); $('#t_msg').className='msg err'; }
+};
+$('#t_get').onclick=async()=>{ const id=$('#t_id').value.trim(); if(!id) return alert('id required');
+  try{ let r; if(apiMode()){ r=await jsonFetch(base()+`/api/tasks/${encodeURIComponent(id)}${$('#select').value.trim()?`?select=${encodeURIComponent($('#select').value.trim())}`:''}`); }
+  else{ r={message:'OK',data:await Store.getTask(id)}; }
+  setResult(r); setEndpoint((base()||'(demo)')+`/api/tasks/${id}`); }catch(e){ setResult(String(e)); }
+};
+$('#t_put').onclick=async()=>{ const id=$('#t_id').value.trim(); if(!id) return alert('id required'); const b=readTaskBody();
+  try{ let r; if(apiMode()){ r=await jsonFetch(base()+`/api/tasks/${encodeURIComponent(id)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}
+  else{ r={message:'OK',data:await Store.putTask(id,b)};}
+  setResult(r); t_reload(); }catch(e){ setResult(String(e)); }
+};
+$('#t_del').onclick=async()=>{ const id=$('#t_id').value.trim(); if(!id) return alert('id required');
+  try{ if(apiMode()){ await fetch(base()+`/api/tasks/${encodeURIComponent(id)}`,{method:'DELETE'}); setResult('204 No Content'); }
+  else{ await Store.delTask(id); setResult('Deleted (demo)'); }
+  t_reload(); }catch(e){ setResult(String(e)); }
+};
 
-    async function ping() {
-      if (!inApiMode()) { setState("Demo Mode", "warn"); return; }
-      try {
-        setState("Pinging…"); await fetch(apiBase() + "/api/tasks?limit=1", { method:"GET" });
-        setState("Backend reachable", "ok");
-      } catch (e) {
-        setState("Backend unreachable", "bad");
-        showMsg(help, "Cannot reach backend. Check npm start and port 3000 Public.", "err");
-      }
-    }
+// ---------- Users CRUD ----------
+function parseArr(txt){ if(!txt.trim()) return []; try{return JSON.parse(txt)}catch{return []}}
+function renderUsers(arr){
+  const tb=$('#u_table tbody'); tb.innerHTML='';
+  arr.forEach(u=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${u._id||''}</td><td>${u.name||''}</td><td>${u.email||''}</td><td>${(u.pendingTasks||[]).length}</td>`;
+    tb.appendChild(tr);
+  });
+}
+async function u_reload(){ if(apiMode()){ const r=await jsonFetch(base()+'/api/users'); renderUsers(r.data||[]); setResult(r); setEndpoint(base()+'/api/users'); } else { const a=await Store.listUsers(); renderUsers(a); setResult({message:'OK',data:a}); setEndpoint('(demo)'); } }
+$('#u_reload').onclick=u_reload;
 
-    function setMode() {
-      if (inApiMode()) { modeLabel.textContent = "API"; clearDemoBtn.style.display = "none"; }
-      else { modeLabel.textContent = "Demo"; clearDemoBtn.style.display = "inline-block"; }
-      ping(); loadTasks();
-    }
+$('#u_create').onclick=async()=>{
+  const body={name:$('#u_name').value.trim(),email:$('#u_email').value.trim(),pendingTasks:parseArr($('#u_pending').value||'[]')};
+  if(!body.name||!body.email) return alert('name & email required');
+  try{
+    let r; if(apiMode()){ r=await jsonFetch(base()+'/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
+    else{ r={message:'Created',data:await Store.createUser(body)};}
+    setResult(r); u_reload();
+    $('#u_msg').textContent='Created'; $('#u_msg').className='msg ok';
+  }catch(e){ $('#u_msg').textContent=String(e); $('#u_msg').className='msg err'; }
+};
+$('#u_get').onclick=async()=>{ const id=$('#u_id').value.trim(); if(!id) return alert('id required');
+  try{ let r; if(apiMode()){ r=await jsonFetch(base()+`/api/users/${encodeURIComponent(id)}${$('#select').value.trim()?`?select=${encodeURIComponent($('#select').value.trim())}`:''}`);}
+  else{ r={message:'OK',data:await Store.getUser(id)};}
+  setResult(r); setEndpoint((base()||'(demo)')+`/api/users/${id}`);}catch(e){ setResult(String(e)); }
+};
+$('#u_put').onclick=async()=>{ const id=$('#u_id').value.trim(); if(!id) return alert('id required');
+  const body={}; const n=$('#u_name').value.trim(); const e=$('#u_email').value.trim(); const p=$('#u_pending').value.trim();
+  if(n) body.name=n; if(e) body.email=e; if(p) body.pendingTasks=parseArr(p);
+  try{ let r; if(apiMode()){ r=await jsonFetch(base()+`/api/users/${encodeURIComponent(id)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
+  else{ r={message:'OK',data:await Store.putUser(id,body)};}
+  setResult(r); u_reload(); }catch(e){ setResult(String(e)); }
+};
+$('#u_del').onclick=async()=>{ const id=$('#u_id').value.trim(); if(!id) return alert('id required');
+  try{ if(apiMode()){ await fetch(base()+`/api/users/${encodeURIComponent(id)}`,{method:'DELETE'}); setResult('204 No Content'); }
+  else{ await Store.delUser(id); setResult('Deleted (demo)'); }
+  u_reload(); }catch(e){ setResult(String(e)); }
+};
 
-    // auto-init
-    setMode();
-    // also auto-apply ?api=... then clear it from URL for cleanliness
-    if (qs.get("api")) history.replaceState(null, "", location.pathname);
-  </script>
+// init
+function init(){
+  if(qs.get('api')) history.replaceState(null,'',location.pathname);
+  if(apiMode()) setState('API mode','ok'); else setState('Demo mode','warn');
+  t_reload(); u_reload();
+}
+init();
+
+$('#run').onclick=runQuery;
+</script>
 </body>
 </html>
-
 
