@@ -7,49 +7,138 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 2rem;
-      background: #f9f9f9;
+      margin: 2rem auto;
+      max-width: 700px;
+      background: #f7f9fb;
+      color: #333;
+      text-align: center;
+    }
+    h1 {
+      color: #0078d7;
+    }
+    .input-row {
+      margin: 1rem 0;
+    }
+    input {
+      padding: 8px;
+      width: 65%;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
     button {
       padding: 8px 12px;
       border: none;
-      background: #0078d7;
-      color: white;
       border-radius: 4px;
+      background-color: #0078d7;
+      color: white;
       cursor: pointer;
     }
     button:hover {
-      background: #005fa3;
+      background-color: #005fa3;
     }
     ul {
-      list-style-type: none;
+      list-style: none;
       padding: 0;
+      margin-top: 1.5rem;
     }
     li {
-      margin: 6px 0;
-      background: #fff;
+      background: white;
       border: 1px solid #ddd;
-      padding: 8px;
-      border-radius: 4px;
+      border-radius: 5px;
+      padding: 10px 14px;
+      margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .empty {
+      color: #999;
+    }
+    footer {
+      margin-top: 3rem;
+      color: #888;
+      font-size: 0.9rem;
     }
   </style>
 </head>
 <body>
   <h1>MP3 Task Manager</h1>
-  <button id="load">Load Tasks</button>
-  <ul id="list"></ul>
+  <p>Connects to your backend API running in GitHub Codespaces.</p>
+
+  <div class="input-row">
+    <input type="text" id="taskName" placeholder="Enter new task name..." />
+    <button id="createBtn">Add Task</button>
+    <button id="loadBtn">Reload</button>
+  </div>
+
+  <ul id="taskList"><li class="empty">No tasks yet. Try adding one!</li></ul>
+
+  <footer>
+    <p>Frontend: <a href="https://jw164.github.io/MP3/">GitHub Pages</a> |
+       Backend: <code id="apiURL">[Codespaces URL here]</code></p>
+  </footer>
 
   <script>
-    document.getElementById("load").onclick = async () => {
-      const res = await fetch("/api/tasks");
-      const data = await res.json();
-      const list = document.getElementById("list");
-      if (data.data && data.data.length > 0) {
-        list.innerHTML = data.data.map(t => `<li>${t.name}</li>`).join("");
-      } else {
-        list.innerHTML = "<li>No tasks found.</li>";
+    // 👇 Replace this line with your actual Codespaces URL
+    // Example: "https://3000-jw164-mp3-abcdef1234567.github.dev"
+    const API_BASE = "https://YOUR_CODESPACES_URL";
+
+    const taskList = document.getElementById("taskList");
+    const apiURL = document.getElementById("apiURL");
+    apiURL.textContent = API_BASE;
+
+    async function loadTasks() {
+      taskList.innerHTML = "<li class='empty'>Loading tasks...</li>";
+      try {
+        const res = await fetch(`${API_BASE}/api/tasks`);
+        const json = await res.json();
+        if (!json.data || json.data.length === 0) {
+          taskList.innerHTML = "<li class='empty'>No tasks found.</li>";
+          return;
+        }
+        taskList.innerHTML = json.data.map(
+          t => `
+            <li>
+              <span>${t.name}</span>
+              <button onclick="deleteTask('${t._id}')">Delete</button>
+            </li>`
+        ).join("");
+      } catch (err) {
+        console.error(err);
+        taskList.innerHTML = "<li class='empty'>Failed to load tasks.</li>";
       }
-    };
+    }
+
+    async function addTask() {
+      const name = document.getElementById("taskName").value.trim();
+      if (!name) return alert("Please enter a task name!");
+      try {
+        await fetch(`${API_BASE}/api/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, deadline: new Date().toISOString() })
+        });
+        document.getElementById("taskName").value = "";
+        loadTasks();
+      } catch (err) {
+        alert("Failed to create task. Check backend URL.");
+      }
+    }
+
+    async function deleteTask(id) {
+      if (!confirm("Delete this task?")) return;
+      try {
+        await fetch(`${API_BASE}/api/tasks/${id}`, { method: "DELETE" });
+        loadTasks();
+      } catch (err) {
+        alert("Failed to delete task.");
+      }
+    }
+
+    document.getElementById("createBtn").onclick = addTask;
+    document.getElementById("loadBtn").onclick = loadTasks;
+    loadTasks();
   </script>
 </body>
 </html>
+
