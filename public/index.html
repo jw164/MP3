@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MP3 Task Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f9f9f9;
+    }
+    button {
+      padding: 8px 12px;
+      border: none;
+      background: #0078d7;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005fa3;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      margin: 6px 0;
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 8px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>MP3 Task Manager</h1>
+  <button id="load">Load Tasks</button>
+  <ul id="list"></ul>
+
+  <script>
+    document.getElementById("load").onclick = async () => {
+      const res = await fetch("/api/tasks");
+      const data = await res.json();
+      const list = document.getElementById("list");
+      if (data.data && data.data.length > 0) {
+        list.innerHTML = data.data.map(t => `<li>${t.name}</li>`).join("");
+      } else {
+        list.innerHTML = "<li>No tasks found.</li>";
+      }
+    };
+  </script>
+</body>
+</html>
