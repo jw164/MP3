@@ -4,203 +4,217 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MP3 Task Manager</title>
-  <meta name="description" content="Frontend for MP3 REST API (users/tasks) running on Codespaces." />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <meta name="description" content="GitHub Pages frontend for MP3 REST API (users/tasks) running on Codespaces." />
   <style>
     :root {
-      --primary: #0078d7;
-      --primary-dark: #005fa3;
-      --muted: #6b7280;
-      --bg: #f7f9fb;
-      --card: #fff;
-      --border: #e5e7eb;
+      --primary:#2563eb; --primary-2:#1d4ed8; --bg:#f8fafc; --card:#fff;
+      --text:#0f172a; --muted:#6b7280; --border:#e5e7eb; --green:#10b981; --red:#ef4444;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: #111827;
-    }
-    .container {
-      max-width: 880px;
-      margin: 40px auto;
-      padding: 0 16px;
-    }
-    header { text-align: center; margin-bottom: 20px; }
-    h1 { margin: 0 0 8px; color: var(--primary); }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,.03);
-    }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; }
-    input[type="text"] {
-      flex: 1 1 260px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      outline: none;
-    }
-    input[type="url"] { width: 100%; }
-    button {
-      padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      background: var(--primary);
-      color: #fff;
-      cursor: pointer;
-    }
-    button:hover { background: var(--primary-dark); }
-    button.ghost {
-      background: #eef2ff;
-      color: var(--primary-dark);
-    }
-    .muted { color: var(--muted); }
-    ul { list-style: none; padding: 0; margin: 12px 0 0; }
-    li.task {
-      display: grid;
-      grid-template-columns: 28px 1fr auto;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    li.task:last-child { border-bottom: 0; }
-    .empty { text-align: center; padding: 16px; color: var(--muted); }
-    .badge {
-      display: inline-block; padding: 2px 8px; border-radius: 999px;
-      background: #ecfeff; color: #0ea5e9; font-size: 12px; border: 1px solid #cffafe;
-    }
-    .status { display:flex; align-items:center; gap:8px; }
-    .dot { width:10px; height:10px; border-radius:50%; background:#d1d5db; display:inline-block; }
-    .dot.ok { background: #10b981; }
-    .dot.err { background: #ef4444; }
-    footer { text-align:center; margin: 28px 0 8px; color: var(--muted); font-size: 14px; }
-    .hint { font-size: 13px; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    .container{max-width:900px;margin:40px auto;padding:0 16px}
+    header{text-align:center;margin-bottom:16px}
+    h1{margin:0 0 6px;color:var(--primary)}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    input[type="url"],input[type="text"]{flex:1 1 260px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;outline:none}
+    button{padding:10px 14px;border:none;border-radius:10px;background:var(--primary);color:#fff;cursor:pointer}
+    button:hover{background:var(--primary-2)}
+    button.ghost{background:#eef2ff;color:var(--primary-2)}
+    .muted{color:var(--muted)}
+    .status{display:flex;align-items:center;gap:8px}
+    .dot{width:10px;height:10px;border-radius:999px;background:#cbd5e1;display:inline-block}
+    .dot.ok{background:var(--green)} .dot.bad{background:var(--red)}
+    .spinner{width:14px;height:14px;border-radius:999px;border:2px solid #cbd5e1;border-top-color:var(--primary);animation:spin 1s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    ul{list-style:none;margin:14px 0 0;padding:0}
+    li.task{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;border-bottom:1px solid var(--border);padding:10px 6px}
+    li.task:last-child{border-bottom:0}
+    .empty{text-align:center;color:var(--muted);padding:16px}
+    .kpi{display:inline-flex;gap:6px;align-items:center;background:#eff6ff;border:1px solid #dbeafe;border-radius:999px;padding:3px 10px;color:#1e40af;font-size:12px}
+    footer{text-align:center;margin:22px 0 8px;color:var(--muted);font-size:13px}
+    .err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px;border-radius:10px;margin-top:10px}
+    .oknote{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:10px;border-radius:10px;margin-top:10px}
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>MP3 Task Manager</h1>
-      <p class="muted">GitHub Pages frontend → calls your Codespaces backend (port 3000, Public).</p>
+      <p class="muted">Pages frontend → calls your Codespaces backend (port 3000 set to <b>Public</b>).</p>
     </header>
 
     <!-- Backend config -->
     <section class="card" aria-label="Backend configuration">
       <div class="row">
-        <input id="apiUrl" type="url" placeholder="Paste your Codespaces public URL, e.g. https://3000-xxxx.github.dev" />
-        <button id="saveUrlBtn" title="Save URL to this browser">Save URL</button>
-        <button id="pingBtn" class="ghost" title="Check backend status">Ping</button>
+        <input id="api" type="url" placeholder="Paste Codespaces public URL, e.g. https://3000-xxxx.github.dev" />
+        <button id="save">Save URL</button>
+        <button id="copy" class="ghost" title="Copy URL">Copy</button>
+        <button id="ping" class="ghost" title="Check backend reachability">Ping</button>
       </div>
-      <p class="hint">
-        Saved in <code>localStorage</code>. You can also pass <code>?api=...</code> in the URL.
-        <span class="status"><span id="dot" class="dot" aria-hidden="true"></span><span id="statusText" class="muted">Idle</span></span>
-      </p>
+      <div class="row" style="margin-top:8px;align-items:center">
+        <span class="status">
+          <span id="dot" class="dot" aria-hidden="true"></span>
+          <span id="stat" class="muted">Idle</span>
+        </span>
+        <span class="kpi" title="Total tasks"><span>Tasks:</span><b id="count">0</b></span>
+      </div>
+      <div id="notice" class="muted" style="margin-top:6px;font-size:13px">
+        URL is saved in <code>localStorage</code>. You can also pass <code>?api=...</code> in the query string.
+      </div>
     </section>
 
-    <!-- Create / load -->
-    <section class="card" style="margin-top:14px;" aria-label="Create or load tasks">
+    <!-- Tasks -->
+    <section class="card" style="margin-top:14px" aria-label="Tasks">
       <div class="row">
-        <input id="taskName" type="text" placeholder="New task name..." />
-        <button id="addBtn">Add Task</button>
-        <button id="loadBtn" class="ghost">Reload</button>
-        <span class="badge" id="countBadge">0</span>
+        <input id="newTask" type="text" placeholder="New task name…" />
+        <button id="add">Add Task</button>
+        <button id="reload" class="ghost">Reload</button>
       </div>
       <ul id="list"><li class="empty">No tasks yet. Click “Reload”.</li></ul>
+      <div id="msg" style="display:none"></div>
     </section>
 
     <footer>
       <div>Frontend: <a href="https://jw164.github.io/MP3/">jw164.github.io/MP3</a></div>
-      <div class="hint">Make sure your backend is running in Codespaces and port 3000 is set to <strong>Public</strong>.</div>
+      <div>Make sure your backend is running (Codespaces → <b>npm start</b>) and port 3000 is <b>Public</b>.</div>
     </footer>
   </div>
 
   <script>
-    // --- config --------------------------------------------------------------
+    const $ = (id) => document.getElementById(id);
+    const apiInput = $("api"), dot = $("dot"), stat = $("stat"), list = $("list"), msg = $("msg"), count = $("count");
+
+    // Load API from ?api= or localStorage
     const qs = new URLSearchParams(location.search);
     const saved = localStorage.getItem("mp3_api_base");
-    const initial = qs.get("api") || saved || "";
-    const API_INPUT = document.getElementById("apiUrl");
-    const DOT = document.getElementById("dot");
-    const STATUS = document.getElementById("statusText");
-    API_INPUT.value = initial;
+    apiInput.value = qs.get("api") || saved || "";
 
     function apiBase() {
-      const v = API_INPUT.value.trim().replace(/\/$/, "");
-      if (!v) throw new Error("Missing API base URL");
+      const v = apiInput.value.trim().replace(/\/$/, "");
+      if (!v) throw new Error("Missing API URL");
       return v;
     }
-    function setStatus(text, cls) {
-      STATUS.textContent = text;
-      DOT.className = "dot " + (cls || "");
+    function note(text, ok=false) {
+      msg.style.display = "block";
+      msg.className = ok ? "oknote" : "err";
+      msg.textContent = text;
+      setTimeout(() => (msg.style.display = "none"), 3500);
+    }
+    function setState(text, cls) {
+      stat.textContent = text;
+      dot.className = "dot " + (cls || "");
     }
 
-    // --- network helpers -----------------------------------------------------
-    async function fetchJSON(url, options = {}, timeout = 10000) {
+    async function fetchJSON(url, opts = {}, timeout = 15000) {
       const ctrl = new AbortController();
-      const id = setTimeout(() => ctrl.abort(), timeout);
+      const t = setTimeout(() => ctrl.abort(), timeout);
       try {
-        const res = await fetch(url, { ...options, signal: ctrl.signal });
+        const res = await fetch(url, { ...opts, signal: ctrl.signal });
         if (!res.ok) throw new Error(res.status + " " + res.statusText);
         return await res.json();
-      } finally {
-        clearTimeout(id);
-      }
+      } finally { clearTimeout(t); }
     }
 
-    // --- UI actions ----------------------------------------------------------
     async function ping() {
       try {
-        setStatus("Pinging…");
-        await fetch(apiBase() + "/api/tasks?limit=1", { method: "GET" });
-        setStatus("Backend reachable", "ok");
+        setState("Pinging…"); dot.classList.add("spin");
+        await fetch(apiBase() + "/api/tasks?limit=1");
+        setState("Backend reachable", "ok");
       } catch (e) {
+        setState("Backend unreachable", "bad");
+        note("Cannot reach backend. Is your Codespaces port 3000 Public? Is CORS enabled on server?", false);
         console.error(e);
-        setStatus("Backend unreachable", "err");
-        alert("Cannot reach backend. Is your Codespaces port 3000 Public?");
-      }
+      } finally { dot.classList.remove("spin"); }
     }
 
     async function loadTasks() {
-      const list = document.getElementById("list");
-      const badge = document.getElementById("countBadge");
-      list.innerHTML = '<li class="empty">Loading…</li>';
+      list.innerHTML = '<li class="empty"><span class="spinner"></span> Loading…</li>';
       try {
-        const json = await fetchJSON(apiBase() + "/api/tasks?sort={\"dateCreated\":-1}");
-        const tasks = json.data || [];
-        badge.textContent = tasks.length;
-        if (!tasks.length) {
-          list.innerHTML = '<li class="empty">No tasks found.</li>';
-          return;
-        }
+        const data = await fetchJSON(apiBase() + '/api/tasks?sort={"dateCreated":-1}');
+        const tasks = data.data || [];
+        count.textContent = tasks.length;
+        if (!tasks.length) { list.innerHTML = '<li class="empty">No tasks found.</li>'; return; }
         list.innerHTML = tasks.map(t => `
           <li class="task">
-            <input type="checkbox" ${t.completed ? "checked" : ""} onchange="toggleTask('${t._id}', this.checked)" title="Toggle completed" />
+            <input type="checkbox" ${t.completed ? "checked" : ""} onchange="toggleTask('${t._id}', this.checked)" />
             <div>
               <div>${t.name}</div>
-              <div class="muted" style="font-size:12px;">id: ${t._id}</div>
+              <div class="muted" style="font-size:12px">id: ${t._id}</div>
             </div>
             <button onclick="removeTask('${t._id}')">Delete</button>
           </li>
         `).join("");
       } catch (e) {
-        console.error(e);
-        document.getElementById("countBadge").textContent = "0";
         list.innerHTML = '<li class="empty">Failed to load tasks.</li>';
+        count.textContent = "0";
+        console.error(e);
       }
     }
 
     async function addTask() {
-      const nameEl = document.getElementById("taskName");
-      const name = nameEl.value.trim();
-      if (!name) return alert("Please enter a task name.");
+      const name = $("newTask").value.trim();
+      if (!name) return note("Please enter a task name.");
       try {
         await fetch(apiBase() + "/api/tasks", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {"Content-Type":"application/json"},
           body: JSON.stringify({ name, deadline: new Date().toISOString() })
+        });
+        $("newTask").value = "";
+        note("Task created.", true);
+        loadTasks();
+      } catch (e) {
+        note("Failed to create task.", false);
+        console.error(e);
+      }
+    }
+
+    async function removeTask(id) {
+      if (!confirm("Delete this task?")) return;
+      try {
+        await fetch(apiBase() + "/api/tasks/" + encodeURIComponent(id), { method:"DELETE" });
+        note("Task deleted.", true);
+        loadTasks();
+      } catch (e) {
+        note("Failed to delete task.", false);
+        console.error(e);
+      }
+    }
+
+    async function toggleTask(id, completed) {
+      try {
+        await fetch(apiBase() + "/api/tasks/" + encodeURIComponent(id), {
+          method:"PUT",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ completed })
+        });
+      } catch (e) {
+        note("Failed to update task.", false);
+      }
+    }
+    window.removeTask = removeTask;
+    window.toggleTask = toggleTask;
+
+    $("save").onclick = () => {
+      try {
+        const v = apiBase();
+        localStorage.setItem("mp3_api_base", v);
+        note("URL saved.", true);
+      } catch (e) { note(e.message); }
+    };
+    $("copy").onclick = async () => {
+      try { await navigator.clipboard.writeText(apiInput.value.trim()); note("URL copied.", true); }
+      catch { note("Copy failed."); }
+    };
+    $("ping").onclick = ping;
+    $("add").onclick = addTask;
+    $("reload").onclick = loadTasks;
+
+    // auto-ping & load if URL present
+    if (apiInput.value) { ping().then(loadTasks); }
+  </script>
+</body>
+</html>
+
 
