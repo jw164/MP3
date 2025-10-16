@@ -2,115 +2,205 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MP3 Task Manager</title>
+  <meta name="description" content="Frontend for MP3 REST API (users/tasks) running on Codespaces." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <style>
+    :root {
+      --primary: #0078d7;
+      --primary-dark: #005fa3;
+      --muted: #6b7280;
+      --bg: #f7f9fb;
+      --card: #fff;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-      background: #f9f9f9;
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #111827;
     }
-    h1 { color: #222; }
-    input, button {
-      padding: 8px;
-      margin-right: 8px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+    .container {
+      max-width: 880px;
+      margin: 40px auto;
+      padding: 0 16px;
     }
+    header { text-align: center; margin-bottom: 20px; }
+    h1 { margin: 0 0 8px; color: var(--primary); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.03);
+    }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    input[type="text"] {
+      flex: 1 1 260px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+    }
+    input[type="url"] { width: 100%; }
     button {
-      background: #0078d7;
-      color: white;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
       cursor: pointer;
     }
-    button:hover {
-      background: #005fa3;
+    button:hover { background: var(--primary-dark); }
+    button.ghost {
+      background: #eef2ff;
+      color: var(--primary-dark);
     }
-    ul { list-style: none; padding: 0; }
-    li {
-      background: #fff;
-      border: 1px solid #ddd;
-      margin: 5px 0;
-      padding: 8px;
-      display: flex;
-      justify-content: space-between;
+    .muted { color: var(--muted); }
+    ul { list-style: none; padding: 0; margin: 12px 0 0; }
+    li.task {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
       align-items: center;
-      border-radius: 4px;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
     }
+    li.task:last-child { border-bottom: 0; }
+    .empty { text-align: center; padding: 16px; color: var(--muted); }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      background: #ecfeff; color: #0ea5e9; font-size: 12px; border: 1px solid #cffafe;
+    }
+    .status { display:flex; align-items:center; gap:8px; }
+    .dot { width:10px; height:10px; border-radius:50%; background:#d1d5db; display:inline-block; }
+    .dot.ok { background: #10b981; }
+    .dot.err { background: #ef4444; }
+    footer { text-align:center; margin: 28px 0 8px; color: var(--muted); font-size: 14px; }
+    .hint { font-size: 13px; }
   </style>
 </head>
 <body>
-  <h1>MP3 Task Manager</h1>
-  <p>
-    Backend API must be running in Codespaces (port 3000 set to Public).  
-    Replace <strong>YOUR_CODESPACES_URL</strong> below with your actual public URL.
-  </p>
+  <div class="container">
+    <header>
+      <h1>MP3 Task Manager</h1>
+      <p class="muted">GitHub Pages frontend → calls your Codespaces backend (port 3000, Public).</p>
+    </header>
 
-  <div>
-    <input type="text" id="taskName" placeholder="Task name" />
-    <button id="createBtn">Add Task</button>
-    <button id="loadBtn">Load Tasks</button>
+    <!-- Backend config -->
+    <section class="card" aria-label="Backend configuration">
+      <div class="row">
+        <input id="apiUrl" type="url" placeholder="Paste your Codespaces public URL, e.g. https://3000-xxxx.github.dev" />
+        <button id="saveUrlBtn" title="Save URL to this browser">Save URL</button>
+        <button id="pingBtn" class="ghost" title="Check backend status">Ping</button>
+      </div>
+      <p class="hint">
+        Saved in <code>localStorage</code>. You can also pass <code>?api=...</code> in the URL.
+        <span class="status"><span id="dot" class="dot" aria-hidden="true"></span><span id="statusText" class="muted">Idle</span></span>
+      </p>
+    </section>
+
+    <!-- Create / load -->
+    <section class="card" style="margin-top:14px;" aria-label="Create or load tasks">
+      <div class="row">
+        <input id="taskName" type="text" placeholder="New task name..." />
+        <button id="addBtn">Add Task</button>
+        <button id="loadBtn" class="ghost">Reload</button>
+        <span class="badge" id="countBadge">0</span>
+      </div>
+      <ul id="list"><li class="empty">No tasks yet. Click “Reload”.</li></ul>
+    </section>
+
+    <footer>
+      <div>Frontend: <a href="https://jw164.github.io/MP3/">jw164.github.io/MP3</a></div>
+      <div class="hint">Make sure your backend is running in Codespaces and port 3000 is set to <strong>Public</strong>.</div>
+    </footer>
   </div>
 
-  <ul id="taskList"></ul>
-
   <script>
-    // Replace this with your Codespaces public API URL
-    const API_BASE = "https://YOUR_CODESPACES_URL"; 
-    const list = document.getElementById("taskList");
+    // --- config --------------------------------------------------------------
+    const qs = new URLSearchParams(location.search);
+    const saved = localStorage.getItem("mp3_api_base");
+    const initial = qs.get("api") || saved || "";
+    const API_INPUT = document.getElementById("apiUrl");
+    const DOT = document.getElementById("dot");
+    const STATUS = document.getElementById("statusText");
+    API_INPUT.value = initial;
+
+    function apiBase() {
+      const v = API_INPUT.value.trim().replace(/\/$/, "");
+      if (!v) throw new Error("Missing API base URL");
+      return v;
+    }
+    function setStatus(text, cls) {
+      STATUS.textContent = text;
+      DOT.className = "dot " + (cls || "");
+    }
+
+    // --- network helpers -----------------------------------------------------
+    async function fetchJSON(url, options = {}, timeout = 10000) {
+      const ctrl = new AbortController();
+      const id = setTimeout(() => ctrl.abort(), timeout);
+      try {
+        const res = await fetch(url, { ...options, signal: ctrl.signal });
+        if (!res.ok) throw new Error(res.status + " " + res.statusText);
+        return await res.json();
+      } finally {
+        clearTimeout(id);
+      }
+    }
+
+    // --- UI actions ----------------------------------------------------------
+    async function ping() {
+      try {
+        setStatus("Pinging…");
+        await fetch(apiBase() + "/api/tasks?limit=1", { method: "GET" });
+        setStatus("Backend reachable", "ok");
+      } catch (e) {
+        console.error(e);
+        setStatus("Backend unreachable", "err");
+        alert("Cannot reach backend. Is your Codespaces port 3000 Public?");
+      }
+    }
 
     async function loadTasks() {
-      list.innerHTML = "<li>Loading...</li>";
+      const list = document.getElementById("list");
+      const badge = document.getElementById("countBadge");
+      list.innerHTML = '<li class="empty">Loading…</li>';
       try {
-        const res = await fetch(`${API_BASE}/api/tasks`);
-        const json = await res.json();
-        if (json.data && json.data.length > 0) {
-          list.innerHTML = json.data
-            .map(
-              (t) =>
-                `<li>${t.name} 
-                  <button onclick="deleteTask('${t._id}')">Delete</button>
-                </li>`
-            )
-            .join("");
-        } else {
-          list.innerHTML = "<li>No tasks found.</li>";
+        const json = await fetchJSON(apiBase() + "/api/tasks?sort={\"dateCreated\":-1}");
+        const tasks = json.data || [];
+        badge.textContent = tasks.length;
+        if (!tasks.length) {
+          list.innerHTML = '<li class="empty">No tasks found.</li>';
+          return;
         }
-      } catch (err) {
-        list.innerHTML = "<li>Failed to fetch tasks.</li>";
-        console.error(err);
+        list.innerHTML = tasks.map(t => `
+          <li class="task">
+            <input type="checkbox" ${t.completed ? "checked" : ""} onchange="toggleTask('${t._id}', this.checked)" title="Toggle completed" />
+            <div>
+              <div>${t.name}</div>
+              <div class="muted" style="font-size:12px;">id: ${t._id}</div>
+            </div>
+            <button onclick="removeTask('${t._id}')">Delete</button>
+          </li>
+        `).join("");
+      } catch (e) {
+        console.error(e);
+        document.getElementById("countBadge").textContent = "0";
+        list.innerHTML = '<li class="empty">Failed to load tasks.</li>';
       }
     }
 
-    async function createTask() {
-      const name = document.getElementById("taskName").value.trim();
+    async function addTask() {
+      const nameEl = document.getElementById("taskName");
+      const name = nameEl.value.trim();
       if (!name) return alert("Please enter a task name.");
       try {
-        await fetch(`${API_BASE}/api/tasks`, {
+        await fetch(apiBase() + "/api/tasks", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, deadline: new Date().toISOString() }),
-        });
-        document.getElementById("taskName").value = "";
-        loadTasks();
-      } catch (err) {
-        alert("Failed to create task.");
-        console.error(err);
-      }
-    }
+          body: JSON.stringify({ name, deadline: new Date().toISOString() })
 
-    async function deleteTask(id) {
-      if (!confirm("Delete this task?")) return;
-      try {
-        await fetch(`${API_BASE}/api/tasks/${id}`, { method: "DELETE" });
-        loadTasks();
-      } catch (err) {
-        alert("Failed to delete task.");
-        console.error(err);
-      }
-    }
-
-    document.getElementById("createBtn").onclick = createTask;
-    document.getElementById("loadBtn").onclick = loadTasks;
-  </script>
-</body>
-</html>
