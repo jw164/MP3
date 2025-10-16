@@ -1,37 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MP3 Task Manager (Frontend)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MP3 Task Manager</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    button { padding: 8px 12px; background:#0078d7; color:#fff; border:0; border-radius:4px; cursor:pointer; }
-    ul { padding:0; list-style:none; }
-    li { margin:6px 0; padding:8px; border:1px solid #ddd; border-radius:4px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f9f9f9;
+    }
+    h1 { color: #222; }
+    input, button {
+      padding: 8px;
+      margin-right: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #0078d7;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005fa3;
+    }
+    ul { list-style: none; padding: 0; }
+    li {
+      background: #fff;
+      border: 1px solid #ddd;
+      margin: 5px 0;
+      padding: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
   <h1>MP3 Task Manager</h1>
-  <p>Backend API (Codespaces) must be running and port 3000 set to Public.</p>
+  <p>
+    Backend API must be running in Codespaces (port 3000 set to Public).  
+    Replace <strong>YOUR_CODESPACES_URL</strong> below with your actual public URL.
+  </p>
 
-  <button id="load">Load Tasks</button>
-  <ul id="list"></ul>
+  <div>
+    <input type="text" id="taskName" placeholder="Task name" />
+    <button id="createBtn">Add Task</button>
+    <button id="loadBtn">Load Tasks</button>
+  </div>
+
+  <ul id="taskList"></ul>
 
   <script>
-    // Replace with your Codespaces public URL (no trailing slash)
-    const API_BASE = "https://YOUR_CODESPACES_URL"; // e.g. https://3000-jw164-xxxxx.github.dev
+    // Replace this with your Codespaces public API URL
+    const API_BASE = "https://YOUR_CODESPACES_URL"; 
+    const list = document.getElementById("taskList");
 
-    document.getElementById("load").onclick = async () => {
+    async function loadTasks() {
+      list.innerHTML = "<li>Loading...</li>";
       try {
         const res = await fetch(`${API_BASE}/api/tasks`);
         const json = await res.json();
-        const list = document.getElementById("list");
-        list.innerHTML = (json.data || []).map(t => `<li>${t.name}</li>`).join("") || "<li>No tasks found.</li>";
-      } catch (e) {
-        alert("Failed to load tasks. Is your Codespaces API running and public?");
+        if (json.data && json.data.length > 0) {
+          list.innerHTML = json.data
+            .map(
+              (t) =>
+                `<li>${t.name} 
+                  <button onclick="deleteTask('${t._id}')">Delete</button>
+                </li>`
+            )
+            .join("");
+        } else {
+          list.innerHTML = "<li>No tasks found.</li>";
+        }
+      } catch (err) {
+        list.innerHTML = "<li>Failed to fetch tasks.</li>";
+        console.error(err);
       }
-    };
+    }
+
+    async function createTask() {
+      const name = document.getElementById("taskName").value.trim();
+      if (!name) return alert("Please enter a task name.");
+      try {
+        await fetch(`${API_BASE}/api/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, deadline: new Date().toISOString() }),
+        });
+        document.getElementById("taskName").value = "";
+        loadTasks();
+      } catch (err) {
+        alert("Failed to create task.");
+        console.error(err);
+      }
+    }
+
+    async function deleteTask(id) {
+      if (!confirm("Delete this task?")) return;
+      try {
+        await fetch(`${API_BASE}/api/tasks/${id}`, { method: "DELETE" });
+        loadTasks();
+      } catch (err) {
+        alert("Failed to delete task.");
+        console.error(err);
+      }
+    }
+
+    document.getElementById("createBtn").onclick = createTask;
+    document.getElementById("loadBtn").onclick = loadTasks;
   </script>
 </body>
 </html>
