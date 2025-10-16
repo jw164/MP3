@@ -4,106 +4,143 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MP3 – Users & Tasks API Client</title>
+<meta name="description" content="Frontend for MP3 REST API (users & tasks) with API and demo modes." />
 <style>
-  :root{--bg:#0b1020;--card:#111730;--muted:#9aa4bf;--text:#e8ecf6;--primary:#4f8bff;--ok:#22c55e;--bad:#ef4444;--border:#1c2442}
-  *{box-sizing:border-box} body{margin:0;background:linear-gradient(160deg,#0b1020 0%,#0e1530 100%);color:var(--text);font:14px/1.5 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
-  .wrap{max-width:1100px;margin:36px auto;padding:0 16px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
-  h1{margin:0 0 6px;font-size:28px}
+  :root{
+    --bg:#0a0f1f; --bg-2:#0d142a; --card:#0f1a36; --muted:#9fb0d1; --text:#eef3ff;
+    --primary:#5b8cff; --primary-2:#4476ff; --ok:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+    --border:#1b2852; --chip:#0f1f45; --chip-b:#1e3a8a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--text);
+    background:
+      radial-gradient(1200px 700px at 15% -10%, #12204a 0%, transparent 60%),
+      radial-gradient(900px 600px at 100% -20%, #0f1f44 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg) 0%, #0a1124 100%);
+    font:14px/1.55 ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial;
+  }
+  .wrap{max-width:1100px;margin:38px auto;padding:0 18px}
+  .brand{
+    border:1px solid var(--border); background:linear-gradient(180deg,#0c1530,#0c1737);
+    border-radius:18px; padding:18px 18px 14px; box-shadow:0 12px 40px rgba(0,0,0,.25)
+  }
+  .brand h1{margin:0 0 8px; font-size:28px; letter-spacing:.2px}
+  .brand .sub{color:var(--muted); margin-top:2px}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  input,textarea,select,button{
+    border-radius:12px; border:1px solid var(--border); background:#0b1533; color:var(--text);
+    padding:10px 12px; outline:none; transition:.15s ease;
+  }
+  input:focus,textarea:focus,select:focus{box-shadow:0 0 0 3px rgba(91,140,255,.15)}
+  button{background:var(--primary); border:none; cursor:pointer}
+  button:hover{background:var(--primary-2)}
+  button.ghost{background:#0e1b3e}
+  button.warn{background:#ffb020; color:#201100}
+  .chip{display:inline-flex; gap:8px; align-items:center; background:var(--chip); border:1px solid var(--chip-b);
+        color:#bcd1ff; padding:6px 12px; border-radius:999px}
+  .dot{width:10px;height:10px;border-radius:999px;background:#6b7280;display:inline-block}
+  .ok{background:var(--ok)!important} .bad{background:var(--bad)!important} .warnDot{background:var(--warn)!important}
+  .tabs{display:flex; gap:8px; margin:12px 0}
+  .tab{padding:8px 12px; border:1px solid var(--border); border-radius:12px; background:#0d1736; color:#b8c5e7; cursor:pointer}
+  .tab.active{background:var(--primary); color:#fff; border-color:transparent}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:10px}
+  .l{display:grid; grid-template-columns:1.2fr .8fr; gap:14px}
+  @media (max-width:980px){ .l{grid-template-columns:1fr} }
+  .card{border:1px solid var(--border); background:var(--card); border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .code{background:#0c1430; border:1px solid var(--border); padding:12px; border-radius:12px; white-space:pre-wrap; word-break:break-word}
+  table{width:100%; border-collapse:collapse; border:1px solid var(--border); border-radius:12px; overflow:hidden}
+  th,td{padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top}
+  th{background:#0c1430; text-align:left; color:#c8d6f6}
   .muted{color:var(--muted)}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  input,textarea,select,button{border-radius:10px;border:1px solid var(--border);background:#0f1733;color:var(--text);padding:10px 12px}
-  input,textarea,select{flex:1}
-  textarea{min-height:90px;font-family:ui-monospace,Consolas,Monaco,monospace}
-  button{background:var(--primary);border:none;cursor:pointer} button.ghost{background:#122046} button.warn{background:#ffae1f;color:#130a00}
-  .l{display:grid;grid-template-columns:1.2fr 0.8fr;gap:12px}
-  .tabs{display:flex;gap:6px;margin:10px 0}
-  .tab{padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:#0e1631;color:var(--muted);cursor:pointer}
-  .tab.active{background:var(--primary);color:#fff;border-color:transparent}
-  .kpi{display:inline-flex;gap:8px;align-items:center;background:#0d1a39;border:1px solid var(--border);border-radius:999px;padding:6px 12px;margin-left:8px}
-  .dot{width:10px;height:10px;border-radius:999px;background:#54608a;display:inline-block}
-  .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.warn{background:#f59e0b}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
-  table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-  th,td{border-bottom:1px solid var(--border);padding:10px 12px;vertical-align:top}
-  th{background:#0c132b;text-align:left;color:#b7c3e0}
-  .code{font-family:ui-monospace,Consolas,monospace;background:#0b1228;border:1px solid var(--border);padding:10px;border-radius:10px;white-space:pre-wrap;word-break:break-word}
-  .pill{display:inline-flex;align-items:center;gap:6px;background:#0b1a39;border:1px solid var(--border);border-radius:999px;padding:4px 10px;color:#b7c3e0}
-  .btns{display:flex;gap:6px;flex-wrap:wrap}
-  .msg{margin-top:8px;padding:10px;border-radius:10px;border:1px solid var(--border)}
-  .ok{color:#16a34a} .err{color:#ef4444}
+  .msg{margin-top:10px; padding:10px; border-radius:12px; border:1px solid var(--border)}
+  .msg.ok{background:#072416; border-color:#0b5130; color:#b6f0cd}
+  .msg.err{background:#2a0b0b; border-color:#7a2323; color:#f7c6c6}
+  .headTools{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="card">
-    <h1>MP3 API Client</h1>
-    <div class="row">
+
+  <!-- Brand / Top bar -->
+  <section class="brand">
+    <div class="row" style="justify-content:space-between; gap:12px">
+      <div>
+        <h1>MP3 API Client</h1>
+        <div class="sub">CS498 – Users & Tasks. Supports <code>where / sort / select / skip / limit / count</code>.</div>
+      </div>
+      <div class="headTools">
+        <span class="chip"><span class="dot" id="dot"></span><span id="state">Idle</span></span>
+        <span class="chip">Mode: <b id="mode">Demo</b></span>
+        <span class="chip">Tasks: <b id="kpiTasks">0</b></span>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
       <input id="apiBase" type="url" placeholder="API base, e.g. https://your-service.onrender.com"/>
       <button id="save">Save URL</button>
       <button id="ping" class="ghost">Ping</button>
-      <span class="kpi"><span class="dot" id="dot"></span><span id="state">Idle</span></span>
-      <span class="kpi">Mode: <b id="mode">Demo</b></span>
-      <span class="kpi">Tasks: <b id="count">0</b></span>
+      <button id="seed" class="ghost" title="Seed sample data (demo mode only)">Seed Demo Data</button>
+      <button id="clearDemo" class="ghost" title="Clear demo data">Clear Demo</button>
     </div>
     <div class="muted" style="margin-top:6px">
-      URL persists in <code>localStorage</code>. You can also open with <code>?api=...</code>. This UI supports all required query params: <code>where/sort/select/skip/limit/count</code>.
+      URL persists in <code>localStorage</code>. You can also open with <code>?api=...</code>.
+      If no backend is reachable, the UI falls back to <b>Demo mode</b> (localStorage).
     </div>
-  </div>
+  </section>
 
   <div class="tabs">
     <button class="tab active" data-tab="tasks">Tasks</button>
     <button class="tab" data-tab="users">Users</button>
   </div>
 
-  <!-- main layout -->
   <div class="l">
-    <!-- left: query + results -->
-    <div class="card">
-      <h3 style="margin-top:0">Query Builder</h3>
+    <!-- Left: Query Builder + Result -->
+    <section class="card">
+      <h3 style="margin:0 0 8px">Query Builder</h3>
       <div class="grid">
         <textarea id="where" placeholder='where (JSON), e.g. {"completed": true}'></textarea>
-        <textarea id="sort" placeholder='sort (JSON), e.g. {"name": 1}'></textarea>
+        <textarea id="sort"   placeholder='sort (JSON), e.g. {"name": 1}'></textarea>
         <textarea id="select" placeholder='select (JSON), e.g. {"_id": 0, "name": 1}'></textarea>
-        <input id="skip" type="number" placeholder="skip (number)"/>
-        <input id="limit" type="number" placeholder="limit (number)"/>
-        <select id="count">
+        <input id="skip"  type="number" placeholder="skip (number)" />
+        <input id="limit" type="number" placeholder="limit (number)" />
+        <select id="countSel">
           <option value="">count = false</option>
           <option value="true">count = true</option>
         </select>
       </div>
-      <div class="btns" style="margin-top:10px">
+      <div class="row" style="margin-top:10px">
         <button id="run">Run</button>
         <button id="examples" class="ghost">Example Queries</button>
-        <button id="clear" class="ghost">Clear Params</button>
+        <button id="clearParams" class="ghost">Clear Params</button>
       </div>
       <div id="endpoint" class="code" style="margin-top:10px"></div>
-      <div id="result" class="code" style="margin-top:10px;min-height:160px">Result will appear here…</div>
-    </div>
+      <div id="result" class="code" style="margin-top:10px; min-height:160px">Result will appear here…</div>
+    </section>
 
-    <!-- right: CRUD -->
-    <div class="card">
-      <h3 style="margin-top:0"><span id="crudTitle">Create Task</span></h3>
+    <!-- Right: CRUD -->
+    <section class="card">
+      <h3 style="margin:0 0 8px"><span id="crudTitle">Create Task</span></h3>
 
-      <!-- TASKS FORM -->
+      <!-- TASKS -->
       <div id="formTasks">
         <div class="grid">
-          <input id="t_id" placeholder="id (for GET/PUT/DELETE)"/>
-          <input id="t_name" placeholder="name *"/>
-          <input id="t_deadline" type="datetime-local" placeholder="deadline *"/>
-          <input id="t_completed" placeholder="completed (true/false)"/>
-          <input id="t_assignedUser" placeholder='assignedUser (user _id or "")'/>
-          <input id="t_assignedUserName" placeholder='assignedUserName (or "unassigned")'/>
+          <input id="t_id" placeholder="id (for GET/PUT/DELETE)" />
+          <input id="t_name" placeholder="name *" />
+          <input id="t_deadline" type="datetime-local" placeholder="deadline *" />
+          <input id="t_completed" placeholder='completed (true/false)' />
+          <input id="t_assignedUser" placeholder='assignedUser (user _id or "")' />
+          <input id="t_assignedUserName" placeholder='assignedUserName (or "unassigned")' />
           <textarea id="t_description" placeholder="description"></textarea>
         </div>
-        <div class="btns" style="margin-top:10px">
+        <div class="row" style="margin-top:10px">
           <button id="t_create">POST /tasks</button>
-          <button id="t_get" class="ghost">GET /tasks/:id</button>
-          <button id="t_put" class="ghost">PUT /tasks/:id</button>
-          <button id="t_del" class="warn">DELETE /tasks/:id</button>
+          <button id="t_get"   class="ghost">GET /tasks/:id</button>
+          <button id="t_put"   class="ghost">PUT /tasks/:id</button>
+          <button id="t_del"   class="warn">DELETE /tasks/:id</button>
           <button id="t_reload" class="ghost">Reload list (GET /tasks)</button>
         </div>
-        <div id="t_msg" class="msg muted"></div>
+        <div id="t_msg" class="msg" style="display:none"></div>
         <div style="margin-top:10px">
           <table id="t_table">
             <thead><tr><th>_id</th><th>name</th><th>completed</th><th>deadline</th></tr></thead>
@@ -112,22 +149,22 @@
         </div>
       </div>
 
-      <!-- USERS FORM -->
+      <!-- USERS -->
       <div id="formUsers" style="display:none">
         <div class="grid">
-          <input id="u_id" placeholder="id (for GET/PUT/DELETE)"/>
-          <input id="u_name" placeholder="name *"/>
-          <input id="u_email" placeholder="email *"/>
+          <input id="u_id" placeholder="id (for GET/PUT/DELETE)" />
+          <input id="u_name" placeholder="name *" />
+          <input id="u_email" placeholder="email *" />
           <textarea id="u_pending" placeholder='pendingTasks (JSON array of task _id strings)'></textarea>
         </div>
-        <div class="btns" style="margin-top:10px">
+        <div class="row" style="margin-top:10px">
           <button id="u_create">POST /users</button>
           <button id="u_get" class="ghost">GET /users/:id</button>
           <button id="u_put" class="ghost">PUT /users/:id</button>
           <button id="u_del" class="warn">DELETE /users/:id</button>
           <button id="u_reload" class="ghost">Reload list (GET /users)</button>
         </div>
-        <div id="u_msg" class="msg muted"></div>
+        <div id="u_msg" class="msg" style="display:none"></div>
         <div style="margin-top:10px">
           <table id="u_table">
             <thead><tr><th>_id</th><th>name</th><th>email</th><th>pendingTasks (len)</th></tr></thead>
@@ -135,139 +172,159 @@
           </table>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 
-  <div class="muted" style="margin-top:10px">Tip: if no API is reachable, the UI falls back to a demo store (localStorage) so you can still present the flows.</div>
+  <div class="muted" style="margin-top:12px">
+    Tip: you can run with a real backend (paste API base URL and press Save + Ping) or present in Demo mode using seeded data.
+  </div>
 </div>
 
 <script>
-// ---------- helpers ----------
-const $ = (sel)=>document.querySelector(sel);
-const $$=(sel)=>document.querySelectorAll(sel);
-const apiInput = $('#apiBase'), dot = $('#dot'), state=$('#state'), mode = $('#mode');
-const endpointEl = $('#endpoint'), resultEl = $('#result'), countEl = $('#count');
-
+/* ------------------------- helpers ------------------------- */
+const $ = (s)=>document.querySelector(s);
+const $$=(s)=>document.querySelectorAll(s);
+const apiInput = $('#apiBase'), dot = $('#dot'), state = $('#state'), modeEl = $('#mode'), kpiTasks = $('#kpiTasks');
+const endpointEl = $('#endpoint'), resultEl = $('#result');
 const qs = new URLSearchParams(location.search);
-const saved = localStorage.getItem('mp3_api_base');
-apiInput.value = qs.get('api') || saved || '';
+apiInput.value = qs.get('api') || localStorage.getItem('mp3_api_base') || '';
 
-// tabs
-for(const b of $$('.tab')){
-  b.onclick=()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); b.classList.add('active');
-    const t=b.dataset.tab; $('#formTasks').style.display=t==='tasks'?'block':'none';
-    $('#formUsers').style.display=t==='users'?'block':'none';
+for (const b of $$('.tab')){
+  b.onclick = () => {
+    $$('.tab').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+    const t=b.dataset.tab; $('#formTasks').style.display=t==='tasks'?'block':'none'; $('#formUsers').style.display=t==='users'?'block':'none';
     $('#crudTitle').textContent = t==='tasks'?'Create Task':'Create User';
   };
 }
 
-// fetch JSON with timeout
-async function jsonFetch(url, opts={}, t=15000){
-  const ctl=new AbortController(); const id=setTimeout(()=>ctl.abort(),t);
-  try{ const r=await fetch(url,{...opts,signal:ctl.signal});
-       if(!r.ok) throw new Error(r.status+' '+r.statusText);
-       return await r.json();
-  }finally{ clearTimeout(id); }
-}
-
-// demo store (for no-backend mode)
-const Store = {
-  kTask:'mp3_demo_tasks', kUser:'mp3_demo_users',
-  _r(k){return JSON.parse(localStorage.getItem(k)||'[]')},
-  _w(k,v){localStorage.setItem(k,JSON.stringify(v))},
-
-  async listTasks(){return this._r(this.kTask)},
-  async createTask(p){const a=this._r(this.kTask); p._id=String(Date.now()); a.unshift(p); this._w(this.kTask,a); return p;},
-  async getTask(id){return this._r(this.kTask).find(x=>x._id===id)||null},
-  async putTask(id,p){const a=this._r(this.kTask); const i=a.findIndex(x=>x._id===id); if(i<0)return null; a[i]={...a[i],...p}; this._w(this.kTask,a); return a[i]},
-  async delTask(id){this._w(this.kTask,this._r(this.kTask).filter(x=>x._id!==id))},
-
-  async listUsers(){return this._r(this.kUser)},
-  async createUser(p){const a=this._r(this.kUser); p._id=String(Date.now()); p.pendingTasks=p.pendingTasks||[]; a.unshift(p); this._w(this.kUser,a); return p;},
-  async getUser(id){return this._r(this.kUser).find(x=>x._id===id)||null},
-  async putUser(id,p){const a=this._r(this.kUser); const i=a.findIndex(x=>x._id===id); if(i<0)return null; a[i]={...a[i],...p}; this._w(this.kUser,a); return a[i]},
-  async delUser(id){this._w(this.kUser,this._r(this.kUser).filter(x=>x._id!==id))}
-};
-
 function base(){ const v=apiInput.value.trim().replace(/\/$/,''); return v||null; }
 function apiMode(){ return !!base(); }
-function setState(s,cls){ state.textContent=s; dot.className='dot '+(cls||''); mode.textContent=apiMode()?'API':'Demo'; }
+function setState(txt, cls){ state.textContent = txt; dot.className = 'dot ' + (cls||''); modeEl.textContent = apiMode()?'API':'Demo'; }
 function setEndpoint(url){ endpointEl.textContent = url||''; }
-function setResult(obj){ resultEl.textContent = (typeof obj==='string')?obj:JSON.stringify(obj,null,2); }
+function setResult(obj){ resultEl.textContent = (typeof obj === 'string') ? obj : JSON.stringify(obj,null,2); }
+async function jfetch(url, opts={}, timeout=15000){
+  const ctl=new AbortController(); const id=setTimeout(()=>ctl.abort(),timeout);
+  try{ const r=await fetch(url,{...opts,signal:ctl.signal}); if(!r.ok) throw new Error(r.status+' '+r.statusText); return await r.json(); }
+  finally{ clearTimeout(id); }
+}
 
-// ---------- Query Builder ----------
-function activeResource(){ return $('.tab.active').dataset.tab; } // 'tasks' | 'users'
+/* ------------------------- demo store ---------------------- */
+const Store = {
+  KT:'mp3_demo_tasks', KU:'mp3_demo_users',
+  _r(k){return JSON.parse(localStorage.getItem(k)||'[]')},
+  _w(k,v){localStorage.setItem(k,JSON.stringify(v))},
+  async listTasks(){return this._r(this.KT)},
+  async createTask(p){const a=this._r(this.KT); p._id=String(Date.now()+Math.random()); a.unshift(p); this._w(this.KT,a); return p;},
+  async getTask(id){return this._r(this.KT).find(x=>x._id===id)||null},
+  async putTask(id,p){const a=this._r(this.KT); const i=a.findIndex(x=>x._id===id); if(i<0)return null; a[i]={...a[i],...p}; this._w(this.KT,a); return a[i]},
+  async delTask(id){this._w(this.KT,this._r(this.KT).filter(x=>x._id!==id))},
+  async listUsers(){return this._r(this.KU)},
+  async createUser(p){const a=this._r(this.KU); p._id=String(Date.now()+Math.random()); p.pendingTasks=p.pendingTasks||[]; a.unshift(p); this._w(this.KU,a); return p;},
+  async getUser(id){return this._r(this.KU).find(x=>x._id===id)||null},
+  async putUser(id,p){const a=this._r(this.KU); const i=a.findIndex(x=>x._id===id); if(i<0)return null; a[i]={...a[i],...p}; this._w(this.KU,a); return a[i]},
+  async delUser(id){this._w(this.KU,this._r(this.KU).filter(x=>x._id!==id))},
+  async clear(){localStorage.removeItem(this.KT); localStorage.removeItem(this.KU);}
+};
+
+// Seed demo data (users & tasks)
+function randomName(){ const first=['Liam','Olivia','Ava','Emma','Noah','Mia','Ethan','Lucas','Amelia','Isabella']; const last=['Brown','Lee','Wang','Garcia','Kim','Nguyen','Davis','Clark','Young','Turner']; return first[Math.floor(Math.random()*first.length)]+' '+last[Math.floor(Math.random()*last.length)]; }
+function randomEmail(n){ return (n||'user').toLowerCase().replace(/\s+/g,'') + Math.floor(Math.random()*900+100) + '@demo.dev'; }
+function randomDate(offset=0){ const d=new Date(); d.setDate(d.getDate()+offset); return d.toISOString(); }
+
+async function seedDemo(){
+  // only seed if store is empty
+  const existingT = await Store.listTasks(); const existingU = await Store.listUsers();
+  if(existingT.length || existingU.length){
+    alert('Demo store already has data. Use "Clear Demo" first if you want to reseed.'); return;
+  }
+  // create 10 users
+  const users=[];
+  for(let i=0;i<10;i++){
+    users.push(await Store.createUser({ name:randomName(), email:randomEmail('user'), pendingTasks:[] }));
+  }
+  // create 20 tasks (half completed) and assign ~60% to a random user
+  for(let i=1;i<=20;i++){
+    const assigned = Math.random() < 0.6;
+    const u = assigned ? users[Math.floor(Math.random()*users.length)] : null;
+    const t = await Store.createTask({
+      name:`Task #${i}`,
+      description:`Auto-seeded task #${i}`,
+      deadline: randomDate(i-10),
+      completed: Math.random()<0.5,
+      assignedUser: u ? u._id : "",
+      assignedUserName: u ? u.name : "unassigned"
+    });
+    if(u) { u.pendingTasks.push(t._id); await Store.putUser(u._id, { pendingTasks: u.pendingTasks }); }
+  }
+  await t_reload(); await u_reload();
+  setState('Seeded (demo)','warnDot');
+}
+
+/* ------------------------- Query Builder ------------------- */
+function activeTab(){ return $('.tab.active').dataset.tab; } // 'tasks' | 'users'
 function buildQuery(){
-  const q = {};
+  const q={};
   const w=$('#where').value.trim(); if(w) q.where=w;
   const s=$('#sort').value.trim();  if(s) q.sort=s;
   const sel=$('#select').value.trim(); if(sel) q.select=sel;
   const sk=$('#skip').value.trim(); if(sk) q.skip=sk;
   const lim=$('#limit').value.trim(); if(lim) q.limit=lim;
-  const c=$('#count').value; if(c) q.count='true';
-  const qs = new URLSearchParams(q).toString();
-  const res = activeResource()==='tasks'?'tasks':'users';
-  const url = (base()||'') + `/api/${res}` + (qs?`?${qs}`:'');
-  return url;
+  const c=$('#countSel').value; if(c) q.count='true';
+  const qs=new URLSearchParams(q).toString();
+  const res=activeTab()==='tasks'?'tasks':'users';
+  return (base()||'') + `/api/${res}` + (qs?`?${qs}`:'');
 }
-
 async function runQuery(){
-  const url = buildQuery();
-  setEndpoint(url||'(demo)');
+  const url=buildQuery(); setEndpoint(url||'(demo)');
   try{
     let data;
-    if(apiMode()){ data = await jsonFetch(url); }
+    if(apiMode()){ data=await jfetch(url); }
     else{
-      // emulate count
-      if(activeResource()==='tasks'){
-        let arr=await Store.listTasks();
-        data = $('#count').value ? { message:'OK', data:arr.length } : { message:'OK', data:arr };
+      if(activeTab()==='tasks'){
+        const arr=await Store.listTasks();
+        data = $('#countSel').value ? {message:'OK',data:arr.length} : {message:'OK',data:arr};
       }else{
-        let arr=await Store.listUsers();
-        data = $('#count').value ? { message:'OK', data:arr.length } : { message:'OK', data:arr };
+        const arr=await Store.listUsers();
+        data = $('#countSel').value ? {message:'OK',data:arr.length} : {message:'OK',data:arr};
       }
     }
     setResult(data);
-    if(activeResource()==='tasks') renderTasks(Array.isArray(data.data)?data.data:[]);
-    else renderUsers(Array.isArray(data.data)?data.data:[]);
+    if(Array.isArray(data.data)) {
+      if(activeTab()==='tasks') renderTasks(data.data); else renderUsers(data.data);
+    }
   }catch(e){ setResult(String(e)); }
 }
-
-// examples
+$('#run').onclick=runQuery;
 $('#examples').onclick=()=>{
-  const res=activeResource();
-  if(res==='tasks'){
+  if(activeTab()==='tasks'){
     $('#where').value='{"completed": true}';
-    $('#sort').value=''; $('#select').value=''; $('#skip').value=''; $('#limit').value=''; $('#count').value='';
+    $('#sort').value=''; $('#select').value=''; $('#skip').value=''; $('#limit').value=''; $('#countSel').value='';
   }else{
-    $('#where').value=''; $('#sort').value='{"name": 1}'; $('#select').value='{"_id":0}'; $('#skip').value='60'; $('#limit').value='20'; $('#count').value='';
+    $('#where').value=''; $('#sort').value='{"name": 1}'; $('#select').value='{"_id": 0}'; $('#skip').value='60'; $('#limit').value='20'; $('#countSel').value='';
   }
 };
-$('#clear').onclick=()=>[$('#where'),$('#sort'),$('#select'),$('#skip'),$('#limit')].forEach(x=>x.value=''),$('#count').value='';
+$('#clearParams').onclick=()=>[$('#where'),$('#sort'),$('#select'),$('#skip'),$('#limit')].forEach(x=>x.value=''),$('#countSel').value='';
 
-// ---------- Ping / Save ----------
-$('#save').onclick=()=>{ const v=base(); if(!v){alert('Please input API base URL'); return;} localStorage.setItem('mp3_api_base',v); setState('Saved','warn'); };
-$('#ping').onclick=async()=>{
-  if(!apiMode()){ setState('Demo mode','warn'); return; }
-  try{ await fetch(base()+'/api/tasks?limit=1'); setState('Reachable','ok'); }
-  catch{ setState('Unreachable','bad'); }
-};
+/* ------------------------- Save / Ping / Demo tools -------- */
+$('#save').onclick=()=>{ const v=base(); if(!v){ alert('Please input API base URL'); return; } localStorage.setItem('mp3_api_base',v); setState('Saved','warnDot'); };
+$('#ping').onclick=async()=>{ if(!apiMode()) { setState('Demo mode','warnDot'); return; } try{ await fetch(base()+'/api/tasks?limit=1'); setState('Reachable','ok'); } catch{ setState('Unreachable','bad'); } };
+$('#seed').onclick=()=>{ if(apiMode()){ alert('Seeding is for demo mode only. Clear URL to use demo.'); return; } seedDemo(); };
+$('#clearDemo').onclick=async()=>{ await Store.clear(); await t_reload(); await u_reload(); setState('Demo cleared','warnDot'); };
 
-// ---------- Tasks CRUD ----------
+/* ------------------------- Tasks CRUD ---------------------- */
 function readTaskBody(){
   const name=$('#t_name').value.trim();
-  const ddl=$('#t_deadline').value?new Date($('#t_deadline').value).toISOString():null;
+  const deadline=$('#t_deadline').value?new Date($('#t_deadline').value).toISOString():null;
   const completed=$('#t_completed').value.trim();
   const assignedUser=$('#t_assignedUser').value.trim();
   const assignedUserName=$('#t_assignedUserName').value.trim();
   const description=$('#t_description').value.trim();
-  const body={};
-  if(name) body.name=name; if(ddl) body.deadline=ddl;
-  if(completed) body.completed = completed==='true' || completed===true;
-  if(assignedUser!=='') body.assignedUser=assignedUser;
-  if(assignedUserName) body.assignedUserName=assignedUserName;
-  if(description) body.description=description;
-  return body;
+  const b={}; if(name) b.name=name; if(deadline) b.deadline=deadline;
+  if(completed) b.completed = completed==='true' || completed===true;
+  if(assignedUser!=='') b.assignedUser=assignedUser;
+  if(assignedUserName) b.assignedUserName=assignedUserName;
+  if(description) b.description=description;
+  return b;
 }
 function renderTasks(arr){
   const tb=$('#t_table tbody'); tb.innerHTML='';
@@ -276,29 +333,29 @@ function renderTasks(arr){
     tr.innerHTML=`<td>${t._id||''}</td><td>${t.name||''}</td><td>${t.completed?'true':'false'}</td><td>${t.deadline||''}</td>`;
     tb.appendChild(tr);
   });
-  countEl.textContent=arr.length||0;
+  kpiTasks.textContent = arr.length||0;
 }
-async function t_reload(){ if(apiMode()){ const r=await jsonFetch(base()+'/api/tasks'); renderTasks(r.data||[]); setResult(r); setEndpoint(base()+'/api/tasks'); } else { const a=await Store.listTasks(); renderTasks(a); setResult({message:'OK',data:a}); setEndpoint('(demo)'); } }
+async function t_reload(){
+  if(apiMode()){ const r=await jfetch(base()+'/api/tasks'); setResult(r); setEndpoint(base()+'/api/tasks'); renderTasks(r.data||[]); }
+  else { const a=await Store.listTasks(); setResult({message:'OK',data:a}); setEndpoint('(demo)'); renderTasks(a); }
+}
 $('#t_reload').onclick=t_reload;
-
 $('#t_create').onclick=async()=>{
-  const b=readTaskBody(); if(!b.name||!b.deadline){$('#t_msg').textContent='name & deadline required'; return;}
+  const b=readTaskBody(); if(!b.name||!b.deadline){ showToast('#t_msg','name & deadline required',false); return; }
   try{
-    let r;
-    if(apiMode()){ r=await jsonFetch(base()+'/api/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); }
+    let r; if(apiMode()){ r=await jfetch(base()+'/api/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); }
     else{ r={message:'Created',data:await Store.createTask(b)}; }
-    setResult(r); t_reload();
-    $('#t_msg').textContent='Created'; $('#t_msg').className='msg ok';
-  }catch(e){ $('#t_msg').textContent=String(e); $('#t_msg').className='msg err'; }
+    setResult(r); t_reload(); showToast('#t_msg','Created',true);
+  }catch(e){ showToast('#t_msg', String(e), false); }
 };
 $('#t_get').onclick=async()=>{ const id=$('#t_id').value.trim(); if(!id) return alert('id required');
-  try{ let r; if(apiMode()){ r=await jsonFetch(base()+`/api/tasks/${encodeURIComponent(id)}${$('#select').value.trim()?`?select=${encodeURIComponent($('#select').value.trim())}`:''}`); }
+  try{ let r; if(apiMode()){ const sel=$('#select').value.trim(); r=await jfetch(base()+`/api/tasks/${encodeURIComponent(id)}${sel?`?select=${encodeURIComponent(sel)}`:''}`); }
   else{ r={message:'OK',data:await Store.getTask(id)}; }
   setResult(r); setEndpoint((base()||'(demo)')+`/api/tasks/${id}`); }catch(e){ setResult(String(e)); }
 };
 $('#t_put').onclick=async()=>{ const id=$('#t_id').value.trim(); if(!id) return alert('id required'); const b=readTaskBody();
-  try{ let r; if(apiMode()){ r=await jsonFetch(base()+`/api/tasks/${encodeURIComponent(id)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}
-  else{ r={message:'OK',data:await Store.putTask(id,b)};}
+  try{ let r; if(apiMode()){ r=await jfetch(base()+`/api/tasks/${encodeURIComponent(id)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}
+  else{ r={message:'OK',data:await Store.putTask(id,b)}; }
   setResult(r); t_reload(); }catch(e){ setResult(String(e)); }
 };
 $('#t_del').onclick=async()=>{ const id=$('#t_id').value.trim(); if(!id) return alert('id required');
@@ -307,8 +364,8 @@ $('#t_del').onclick=async()=>{ const id=$('#t_id').value.trim(); if(!id) return 
   t_reload(); }catch(e){ setResult(String(e)); }
 };
 
-// ---------- Users CRUD ----------
-function parseArr(txt){ if(!txt.trim()) return []; try{return JSON.parse(txt)}catch{return []}}
+/* ------------------------- Users CRUD ---------------------- */
+function parseArr(txt){ if(!txt.trim()) return []; try{return JSON.parse(txt)}catch{return []} }
 function renderUsers(arr){
   const tb=$('#u_table tbody'); tb.innerHTML='';
   arr.forEach(u=>{
@@ -317,29 +374,30 @@ function renderUsers(arr){
     tb.appendChild(tr);
   });
 }
-async function u_reload(){ if(apiMode()){ const r=await jsonFetch(base()+'/api/users'); renderUsers(r.data||[]); setResult(r); setEndpoint(base()+'/api/users'); } else { const a=await Store.listUsers(); renderUsers(a); setResult({message:'OK',data:a}); setEndpoint('(demo)'); } }
+async function u_reload(){
+  if(apiMode()){ const r=await jfetch(base()+'/api/users'); setResult(r); setEndpoint(base()+'/api/users'); renderUsers(r.data||[]); }
+  else { const a=await Store.listUsers(); setResult({message:'OK',data:a}); setEndpoint('(demo)'); renderUsers(a); }
+}
 $('#u_reload').onclick=u_reload;
-
 $('#u_create').onclick=async()=>{
-  const body={name:$('#u_name').value.trim(),email:$('#u_email').value.trim(),pendingTasks:parseArr($('#u_pending').value||'[]')};
-  if(!body.name||!body.email) return alert('name & email required');
+  const body={ name:$('#u_name').value.trim(), email:$('#u_email').value.trim(), pendingTasks:parseArr($('#u_pending').value||'[]') };
+  if(!body.name || !body.email) return alert('name & email required');
   try{
-    let r; if(apiMode()){ r=await jsonFetch(base()+'/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
+    let r; if(apiMode()){ r=await jfetch(base()+'/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
     else{ r={message:'Created',data:await Store.createUser(body)};}
-    setResult(r); u_reload();
-    $('#u_msg').textContent='Created'; $('#u_msg').className='msg ok';
-  }catch(e){ $('#u_msg').textContent=String(e); $('#u_msg').className='msg err'; }
+    setResult(r); u_reload(); showToast('#u_msg','Created',true);
+  }catch(e){ showToast('#u_msg', String(e), false); }
 };
 $('#u_get').onclick=async()=>{ const id=$('#u_id').value.trim(); if(!id) return alert('id required');
-  try{ let r; if(apiMode()){ r=await jsonFetch(base()+`/api/users/${encodeURIComponent(id)}${$('#select').value.trim()?`?select=${encodeURIComponent($('#select').value.trim())}`:''}`);}
-  else{ r={message:'OK',data:await Store.getUser(id)};}
+  try{ let r; if(apiMode()){ const sel=$('#select').value.trim(); r=await jfetch(base()+`/api/users/${encodeURIComponent(id)}${sel?`?select=${encodeURIComponent(sel)}`:''}`);}
+  else{ r={message:'OK',data:await Store.getUser(id)}; }
   setResult(r); setEndpoint((base()||'(demo)')+`/api/users/${id}`);}catch(e){ setResult(String(e)); }
 };
 $('#u_put').onclick=async()=>{ const id=$('#u_id').value.trim(); if(!id) return alert('id required');
-  const body={}; const n=$('#u_name').value.trim(); const e=$('#u_email').value.trim(); const p=$('#u_pending').value.trim();
-  if(n) body.name=n; if(e) body.email=e; if(p) body.pendingTasks=parseArr(p);
-  try{ let r; if(apiMode()){ r=await jsonFetch(base()+`/api/users/${encodeURIComponent(id)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
-  else{ r={message:'OK',data:await Store.putUser(id,body)};}
+  const b={}; const n=$('#u_name').value.trim(); const e=$('#u_email').value.trim(); const p=$('#u_pending').value.trim();
+  if(n) b.name=n; if(e) b.email=e; if(p) b.pendingTasks=parseArr(p);
+  try{ let r; if(apiMode()){ r=await jfetch(base()+`/api/users/${encodeURIComponent(id)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});}
+  else{ r={message:'OK',data:await Store.putUser(id,b)}; }
   setResult(r); u_reload(); }catch(e){ setResult(String(e)); }
 };
 $('#u_del').onclick=async()=>{ const id=$('#u_id').value.trim(); if(!id) return alert('id required');
@@ -348,15 +406,19 @@ $('#u_del').onclick=async()=>{ const id=$('#u_id').value.trim(); if(!id) return 
   u_reload(); }catch(e){ setResult(String(e)); }
 };
 
-// init
+/* ------------------------- UI utils ------------------------ */
+function showToast(sel, text, ok){
+  const el=$(sel); el.textContent=text; el.className='msg '+(ok?'ok':'err'); el.style.display='block';
+  setTimeout(()=>{ el.style.display='none'; }, 2800);
+}
+
+/* ------------------------- init ---------------------------- */
 function init(){
   if(qs.get('api')) history.replaceState(null,'',location.pathname);
-  if(apiMode()) setState('API mode','ok'); else setState('Demo mode','warn');
+  if(apiMode()) setState('API mode','ok'); else setState('Demo mode','warnDot');
   t_reload(); u_reload();
 }
 init();
-
-$('#run').onclick=runQuery;
 </script>
 </body>
 </html>
