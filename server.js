@@ -5,8 +5,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
-import userRoutes from "./routes/users.js";
-import taskRoutes from "./routes/tasks.js";
+import usersRouter from "./routes/users.js";
+import tasksRouter from "./routes/tasks.js";
 
 dotenv.config();
 
@@ -14,46 +14,37 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use("/api/users", userRoutes);
-app.use("/api/tasks", taskRoutes);
+// mount routes
+app.use("/api/users", usersRouter);
+app.use("/api/tasks", tasksRouter);
 
-// Root endpoint
+// health check
 app.get("/", (req, res) => {
-  res.json({ message: "MP3 API is running successfully 🚀" });
+  res.json({ message: "MP3 API is running" });
 });
-
-// MongoDB connection
-const connectDB = async () => {
-  try {
-    const uri = process.env.MONGODB_URI;
-    if (uri) {
-      await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-      console.log("Connected to MongoDB Atlas");
-    } else {
-      console.log("No MONGODB_URI found. Using in-memory MongoDB.");
-      const mongod = await MongoMemoryServer.create();
-      const memUri = mongod.getUri();
-      await mongoose.connect(memUri);
-      console.log("Connected to MongoDB (in-memory)");
-    }
-  } catch (err) {
-    console.error("MongoDB connection failed:", err);
-    process.exit(1);
-  }
-};
 
 const PORT = process.env.PORT || 3000;
 
-// Start the server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
-  });
-});
+async function start() {
+  try {
+    const uri = process.env.MONGODB_URI;
+    if (uri) {
+      await mongoose.connect(uri);
+      console.log("[MongoDB] Connected to external URI");
+    } else {
+      console.log("[MongoDB] No MONGODB_URI, using in-memory DB");
+      const mongod = await MongoMemoryServer.create();
+      await mongoose.connect(mongod.getUri("mp3"));
+      console.log("[MongoDB] In-memory DB ready");
+    }
 
-
-
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Failed to start server:", err);
+    process.exit(1);
+  }
 }
 
 start();
