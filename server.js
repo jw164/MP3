@@ -1,3 +1,4 @@
+tee server.js >/dev/null <<'EOF'
 // server.js
 import express from "express";
 import mongoose from "mongoose";
@@ -14,11 +15,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// mount routes
+// routes
 app.use("/api/users", usersRouter);
 app.use("/api/tasks", tasksRouter);
 
-// health check
+// health
 app.get("/", (req, res) => {
   res.json({ message: "MP3 API is running" });
 });
@@ -48,3 +49,5 @@ async function start() {
 }
 
 start();
+EOF
+
