@@ -1,3 +1,4 @@
+// routes/users.js
 import express from "express";
 import User from "../models/User.js";
 import Task from "../models/Task.js";
@@ -5,26 +6,25 @@ import { runQuery, parseJSON } from "../utils/query.js";
 
 const router = express.Router();
 
-// GET /users
+/** GET /users  (supports where, sort, select, skip, limit, count) */
 router.get("/", async (req, res) => {
   try {
     const result = await runQuery(User, req);
-    return res.status(200).json({ message: "OK", data: result.data });
+    res.status(200).json({ message: "OK", data: result.data });
   } catch (e) {
-    return res.status(400).json({ message: e.message, data: null });
+    res.status(400).json({ message: e.message, data: null });
   }
 });
 
-// POST /users
+/** POST /users  (create user; ensures unique email; sync pendingTasks) */
 router.post("/", async (req, res) => {
   try {
     const { name, email, pendingTasks = [] } = req.body || {};
-    if (!name || !email)
+    if (!name || !email) {
       return res.status(400).json({ message: "name and email are required", data: null });
-
-    const exists = await User.findOne({ email: String(email).toLowerCase() });
-    if (exists)
-      return res.status(400).json({ message: "email already exists", data: null });
+    }
+    const dupe = await User.findOne({ email: String(email).toLowerCase() });
+    if (dupe) return res.status(400).json({ message: "email already exists", data: null });
 
     const user = await User.create({ name, email, pendingTasks });
 
@@ -37,28 +37,26 @@ router.post("/", async (req, res) => {
           await t.save();
         })
       );
-      await user.save();
     }
-
-    return res.status(201).json({ message: "Created", data: user });
+    res.status(201).json({ message: "Created", data: user });
   } catch (e) {
-    return res.status(400).json({ message: e.message, data: null });
+    res.status(400).json({ message: e.message, data: null });
   }
 });
 
-// GET /users/:id
+/** GET /users/:id  (supports ?select={...}) */
 router.get("/:id", async (req, res) => {
   try {
     const projection = parseJSON(req.query.select);
     const user = await User.findById(req.params.id, projection || undefined);
     if (!user) return res.status(404).json({ message: "User not found", data: null });
-    return res.status(200).json({ message: "OK", data: user });
+    res.status(200).json({ message: "OK", data: user });
   } catch (e) {
-    return res.status(400).json({ message: e.message, data: null });
+    res.status(400).json({ message: e.message, data: null });
   }
 });
 
-// PUT /users/:id
+/** PUT /users/:id  (replace fields; keep task↔user references consistent) */
 router.put("/:id", async (req, res) => {
   try {
     const payload = { ...req.body };
@@ -66,19 +64,22 @@ router.put("/:id", async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found", data: null });
 
     if (payload.email) {
-      const dupe = await User.findOne({ email: String(payload.email).toLowerCase(), _id: { $ne: req.params.id } });
-      if (dupe) return res.status(400).json({ message: "email already exists", data: null });
+      const other = await User.findOne({
+        email: String(payload.email).toLowerCase(),
+        _id: { $ne: req.params.id },
+      });
+      if (other) return res.status(400).json({ message: "email already exists", data: null });
     }
 
     if (payload.name !== undefined) user.name = payload.name;
     if (payload.email !== undefined) user.email = payload.email;
 
     if (payload.pendingTasks) {
-      const newSet = new Set(payload.pendingTasks.map(String));
-      const oldSet = new Set(user.pendingTasks.map(String));
+      const newIds = new Set(payload.pendingTasks.map(String));
+      const oldIds = new Set(user.pendingTasks.map(String));
 
-      const toAdd = [...newSet].filter((id) => !oldSet.has(id));
-      const toRemove = [...oldSet].filter((id) => !newSet.has(id));
+      const toAdd = [...newIds].filter((id) => !oldIds.has(id));
+      const toRemove = [...oldIds].filter((id) => !newIds.has(id));
 
       await Promise.all(
         toAdd.map(async (id) => {
@@ -102,17 +103,17 @@ router.put("/:id", async (req, res) => {
         })
       );
 
-      user.pendingTasks = [...newSet];
+      user.pendingTasks = [...newIds];
     }
 
     await user.save();
-    return res.status(200).json({ message: "OK", data: user });
+    res.status(200).json({ message: "OK", data: user });
   } catch (e) {
-    return res.status(400).json({ message: e.message, data: null });
+    res.status(400).json({ message: e.message, data: null });
   }
 });
 
-// DELETE /users/:id
+/** DELETE /users/:id  (unassign that user's pending tasks) */
 router.delete("/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -122,13 +123,6 @@ router.delete("/:id", async (req, res) => {
       { _id: { $in: user.pendingTasks } },
       { $set: { assignedUser: null, assignedUserName: "unassigned" } }
     );
-
     await user.deleteOne();
-    return res.status(204).json({ message: "No Content", data: null });
-  } catch (e) {
-    return res.status(400).json({ message: e.message, data: null });
-  }
-});
-
-export default router;
+    res.status(204).json({ message:
 
