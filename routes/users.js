@@ -6,17 +6,23 @@ import { runQuery, parseJSON } from "../utils/query.js";
 
 const router = express.Router();
 
-/** GET /users  (supports where, sort, select, skip, limit, count) */
+/**
+ * GET /api/users
+ * Supports: where / sort / select / skip / limit / count
+ */
 router.get("/", async (req, res) => {
   try {
     const result = await runQuery(User, req);
     res.status(200).json({ message: "OK", data: result.data });
-  } catch (e) {
-    res.status(400).json({ message: e.message, data: null });
+  } catch (err) {
+    res.status(400).json({ message: err.message, data: null });
   }
 });
 
-/** POST /users  (create user; ensures unique email; sync pendingTasks) */
+/**
+ * POST /api/users
+ * Validates name/email; email unique; sync pendingTasks -> tasks' assignedUser/Name
+ */
 router.post("/", async (req, res) => {
   try {
     const { name, email, pendingTasks = [] } = req.body || {};
@@ -28,35 +34,43 @@ router.post("/", async (req, res) => {
 
     const user = await User.create({ name, email, pendingTasks });
 
+    // two-way: assign listed tasks to this user
     if (pendingTasks.length) {
       const tasks = await Task.find({ _id: { $in: pendingTasks } });
       await Promise.all(
         tasks.map(async (t) => {
-          t.assignedUser = user._id;
+          t.assignedUser = String(user._id); // if your Task.assignedUser is ObjectId, use user._id
           t.assignedUserName = user.name;
           await t.save();
         })
       );
     }
+
     res.status(201).json({ message: "Created", data: user });
-  } catch (e) {
-    res.status(400).json({ message: e.message, data: null });
+  } catch (err) {
+    res.status(400).json({ message: err.message, data: null });
   }
 });
 
-/** GET /users/:id  (supports ?select={...}) */
+/**
+ * GET /api/users/:id
+ * Supports ?select={...}
+ */
 router.get("/:id", async (req, res) => {
   try {
     const projection = parseJSON(req.query.select);
     const user = await User.findById(req.params.id, projection || undefined);
     if (!user) return res.status(404).json({ message: "User not found", data: null });
     res.status(200).json({ message: "OK", data: user });
-  } catch (e) {
-    res.status(400).json({ message: e.message, data: null });
+  } catch (err) {
+    res.status(400).json({ message: err.message, data: null });
   }
 });
 
-/** PUT /users/:id  (replace fields; keep task↔user references consistent) */
+/**
+ * PUT /api/users/:id
+ * Replaces fields; keeps user<->task references consistent with pendingTasks
+ */
 router.put("/:id", async (req, res) => {
   try {
     const payload = { ...req.body };
@@ -81,22 +95,24 @@ router.put("/:id", async (req, res) => {
       const toAdd = [...newIds].filter((id) => !oldIds.has(id));
       const toRemove = [...oldIds].filter((id) => !newIds.has(id));
 
+      // assign tasks newly listed
       await Promise.all(
         toAdd.map(async (id) => {
           const t = await Task.findById(id);
           if (t) {
-            t.assignedUser = user._id;
+            t.assignedUser = String(user._id);
             t.assignedUserName = user.name;
             await t.save();
           }
         })
       );
 
+      // unassign tasks removed from list (only if currently assigned to this user)
       await Promise.all(
         toRemove.map(async (id) => {
           const t = await Task.findById(id);
           if (t && String(t.assignedUser) === String(user._id)) {
-            t.assignedUser = null;
+            t.assignedUser = "";              // if your Task uses ObjectId|null, set to null
             t.assignedUserName = "unassigned";
             await t.save();
           }
@@ -108,12 +124,15 @@ router.put("/:id", async (req, res) => {
 
     await user.save();
     res.status(200).json({ message: "OK", data: user });
-  } catch (e) {
-    res.status(400).json({ message: e.message, data: null });
+  } catch (err) {
+    res.status(400).json({ message: err.message, data: null });
   }
 });
 
-/** DELETE /users/:id  (unassign that user's pending tasks) */
+/**
+ * DELETE /api/users/:id
+ * Unassign all that user's pending tasks, then delete
+ */
 router.delete("/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -121,8 +140,16 @@ router.delete("/:id", async (req, res) => {
 
     await Task.updateMany(
       { _id: { $in: user.pendingTasks } },
-      { $set: { assignedUser: null, assignedUserName: "unassigned" } }
+      { $set: { assignedUser: "", assignedUserName: "unassigned" } } // if ObjectId|null: assignedUser: null
     );
+
     await user.deleteOne();
-    res.status(204).json({ message:
+    res.status(204).json({ message: "No Content", data: null });
+  } catch (err) {
+    res.status(400).json({ message: err.message, data: null });
+  }
+});
+
+export default router;
+
 
