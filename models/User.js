@@ -1,18 +1,18 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema(
   {
-    name: { type: String, required: [true, 'name is required'], trim: true },
+    name: { type: String, required: [true, "name is required"], trim: true },
     email: {
       type: String,
-      required: [true, 'email is required'],
+      required: [true, "email is required"],
       trim: true,
       lowercase: true,
       unique: true
     },
     pendingTasks: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: 'Task',
+      ref: "Task",
       default: []
     },
     dateCreated: { type: Date, default: Date.now }
@@ -20,4 +20,4 @@ const UserSchema = new mongoose.Schema(
   { versionKey: false }
 );
 
-export default mongoose.model('User', UserSchema);
+export default mongoose.model("User", UserSchema);
