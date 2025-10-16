@@ -1,78 +1,57 @@
 // server.js
 import express from "express";
 import mongoose from "mongoose";
-import morgan from "morgan";
 import dotenv from "dotenv";
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
-import usersRouter from "./routes/users.js";
-import tasksRouter from "./routes/tasks.js";
+import { MongoMemoryServer } from "mongodb-memory-server";
 
-let MongoMemoryServer;
-try {
-  ({ MongoMemoryServer } = await import("mongodb-memory-server"));
-} catch {
-  // optional
-}
+import userRoutes from "./routes/users.js";
+import taskRoutes from "./routes/tasks.js";
 
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
-app.use(morgan("dev"));
-app.use(cors()); // allow GitHub Pages (github.io) to call Codespaces API
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, "public"))); // serve /public
+// Routes
+app.use("/api/users", userRoutes);
+app.use("/api/tasks", taskRoutes);
 
-// unified response helper
-app.use((req, res, next) => {
-  res.ok = (data) => res.status(200).json({ message: "OK", data });
-  next();
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({ message: "MP3 API is running successfully 🚀" });
 });
 
-// routes
-app.use("/api/users", usersRouter);
-app.use("/api/tasks", tasksRouter);
-app.use("/users", usersRouter);
-app.use("/tasks", tasksRouter);
-
-// error handler
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ message: "Server error", data: null });
-});
+// MongoDB connection
+const connectDB = async () => {
+  try {
+    const uri = process.env.MONGODB_URI;
+    if (uri) {
+      await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+      console.log("Connected to MongoDB Atlas");
+    } else {
+      console.log("No MONGODB_URI found. Using in-memory MongoDB.");
+      const mongod = await MongoMemoryServer.create();
+      const memUri = mongod.getUri();
+      await mongoose.connect(memUri);
+      console.log("Connected to MongoDB (in-memory)");
+    }
+  } catch (err) {
+    console.error("MongoDB connection failed:", err);
+    process.exit(1);
+  }
+};
 
 const PORT = process.env.PORT || 3000;
 
-async function start() {
-  try {
-    let uri = process.env.MONGODB_URI;
-    if (!uri) {
-      if (!MongoMemoryServer) {
-        console.error("mongodb-memory-server not installed");
-        process.exit(1);
-      }
-      const mem = await MongoMemoryServer.create();
-      uri = mem.getUri("mp3");
-      console.log("[MongoDB] Using in-memory database:", uri);
-    } else {
-      console.log("[MongoDB] Using external URI");
-    }
+// Start the server
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
+  });
+});
 
-    await mongoose.connect(uri);
-    app.listen(PORT, () =>
-      console.log(`API running at http://localhost:${PORT}`)
-    );
-  } catch (e) {
-    console.error("Database connection failed:", e);
-    process.exit(1);
-  }
-}
-
-start();
 
 
 }
